@@ -1,0 +1,121 @@
+version: '3.4'
+
+services:
+  forscrappy:
+    image: forscrappy
+    build:
+      context: .
+      target: development
+    ports:
+      - "8001:8001"
+    networks:
+      services-network:
+        aliases:
+          - app
+    volumes:
+      - .:/4clubbers/ForScrappy
+      - postgres:/vol/postgres
+    environment:
+      - CELERY_BROKER=redis://redis:6379/0
+      - CELERY_BACKEND=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:alpine
+    environment:
+      - DB_HOST=${DB_HOST}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432/tcp"
+    restart: always
+    networks:
+      services-network:
+        aliases:
+          - postgres
+    volumes:
+      - .:/4clubbers/ForScrappy
+      - postgres:/vol/postgres
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      services-network:
+        aliases:
+          - pgadmin
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      services-network:
+        aliases:
+          - redis
+
+  celery:
+    restart: always
+    build:
+      context: .
+    command: celery -A tasks worker -l INFO
+    volumes:
+      - .:/4clubbers/ForScrappy
+      - postgres:/vol/postgres
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USERNAME}
+      - DB_PASS=${DB_PASSWORD}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      - db
+      - redis
+      - forscrappy
+    networks:
+      services-network:
+        aliases:
+          - celery
+  flower:
+#    image: mher/flower
+    container_name: flower
+    build: .
+#    command: [ 'flower', '--broker=redis://redis:6379', '--port=5555' ]
+#    command: celery --app=tasks --broker=${CELERY_BROKER_URL} flower --port=5557
+    command: celery --app=tasks flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      - forscrappy
+      - redis
+      - celery
+    networks:
+      services-network:
+        aliases:
+          - flower
+
+volumes:
+  postgres:
+  forscrappy_postgres:
+    external: true
+    name: forscrappy_postgres
+
+networks:
+   services-network:
+     name: services-network
+     driver: bridge

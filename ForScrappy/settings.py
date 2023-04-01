@@ -34,6 +34,9 @@ USERNAME: str = ''
 PASSWORD: str = ''
 
 
+CELERY_broker_url = "redis://redis:6379"
+result_backend = "redis://redis:6379"
+
 try:
     from local_settings import *  # noqa
     print('>> Loading local local_settings.py file')

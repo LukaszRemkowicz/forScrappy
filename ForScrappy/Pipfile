@@ -16,6 +16,9 @@ aerich = "*"
 typer = "*"
 validators = "*"
 lxml = "*"
+celery = "5.2"
+redis = "*"
+flower = "*"
 
 [dev-packages]
 black = "*"
