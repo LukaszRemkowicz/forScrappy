@@ -13,6 +13,9 @@ asyncpg = "*"
 psycopg2 = "*"
 tortoise-orm = "*"
 aerich = "*"
+typer = "*"
+validators = "*"
+lxml = "*"
 
 [dev-packages]
 black = "*"

@@ -21,7 +21,7 @@ class DownloadLinks(Model):
 
     name = fields.CharField(max_length=1000, null=True, blank=True)
     link = fields.CharField(max_length=2000, null=True, unique=True)
-    link_model = fields.ForeignKeyField('LinkModel', on_delete=fields.SET_NULL, null=True)
+    link_model = fields.ForeignKeyField('models.LinkModel', on_delete=fields.SET_NULL, null=True)
     created = fields.DatetimeField(auto_now_add=True)
     download_link = fields.CharField(max_length=2000, null=True, blank=True)
     downloaded = fields.BooleanField(default=False)
