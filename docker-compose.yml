@@ -4,7 +4,7 @@ services:
   forscrappy:
     image: forscrappy
     build:
-      context: .
+      context: ForScrappy
       target: development
     ports:
       - "8001:8001"
@@ -68,7 +68,7 @@ services:
   celery:
     restart: always
     build:
-      context: .
+      context: ForScrappy
     command: celery -A tasks worker -l INFO
     volumes:
       - .:/4clubbers/ForScrappy
@@ -91,7 +91,7 @@ services:
   flower:
 #    image: mher/flower
     container_name: flower
-    build: .
+    build: ForScrappy
 #    command: [ 'flower', '--broker=redis://redis:6379', '--port=5555' ]
 #    command: celery --app=tasks --broker=${CELERY_BROKER_URL} flower --port=5557
     command: celery --app=tasks flower --port=5555

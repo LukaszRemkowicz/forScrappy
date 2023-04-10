@@ -33,7 +33,7 @@ RUN apk del .tmp-build-deps
 RUN apk update
 RUN apk add redis
 
-COPY . /4clubbers/ForScrappy
+COPY ForScrappy /4clubbers/ForScrappy
 WORKDIR /4clubbers/ForScrappy
 
 FROM development as prod
