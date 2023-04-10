@@ -1,9 +1,11 @@
-name: Deployment
+name: CI/CD
 
 on:
 
   pull_request:
-    branches: [ dev, main ]
+    branches:
+      - dev
+      - main
 
   workflow_dispatch:
 
