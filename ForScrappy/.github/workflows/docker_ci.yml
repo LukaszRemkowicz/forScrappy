@@ -3,12 +3,12 @@ name: CI
 on:
 
   pull_request:
-    branches: [dev]
+    branches: [ dev ]
 
   workflow_dispatch:
 
 jobs:
-  build_and_test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -33,19 +33,9 @@ jobs:
       - name: tests
         run:  pipenv run pytest
 #
-#  check_version:
-#    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v2
-#
-#      - name: Check version
+#      - name: install docker-compose
 #        run: |
-#          OLD_VERSION=$(git show HEAD:setup.py | grep -oP "version='\K[^']+")
-#          NEW_VERSION=$(cat setup.py | grep -oP "version='\K[^']+")
-#
-#          if [ "$OLD_VERSION" = "$NEW_VERSION" ]; then
-#            echo "Version number in setup.py was not updated."
-#            exit 1
-#          fi
+#          pip install docker-compose
+#      - name: Run docker-compose
+#        run: |
+#          docker-compose -f docker-compose.yaml run discord sh -c "pytest"
