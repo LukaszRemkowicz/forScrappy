@@ -21,7 +21,7 @@ jobs:
 
       - name: Create env file
         run: |
-          echo "${{ secrets.ENV_FILE }}" > .env && cd ForScrappy
+          echo "${{ secrets.ENV_FILE }}" > .env && cd ForScrappy && ls -la
 
       - name: Install dependencies
         run: |
