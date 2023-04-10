@@ -3,11 +3,11 @@ import settings
 
 
 app = Celery(
-    'tasks',
+    "tasks",
     broker_url=settings.CELERY_broker_url,
     backend=settings.result_backend,
-    namespace='CELERY',
-    imports='tasks.tasks'
+    namespace="CELERY",
+    imports="tasks.tasks",
 )
 
 # app = Celery('tasks')
