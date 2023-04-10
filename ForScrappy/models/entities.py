@@ -7,7 +7,7 @@ from pydantic.main import BaseModel
 from utils.consts import USER_AGENTS
 
 
-class LinkModel(BaseModel):
+class LinkModelPydantic(BaseModel):
     name: Optional[str]
     for_clubbers_url: str
     error: bool = False
@@ -15,27 +15,27 @@ class LinkModel(BaseModel):
 
 
 class Links(BaseModel):
-    __root__: List[LinkModel]
+    __root__: List[LinkModelPydantic]
 
 
-class DownloadLink(BaseModel):
+class DownloadLinkPydantic(BaseModel):
 
-    name: str
+    name: Optional[str]
     link: str
-    link_model: LinkModel
-    download_link: str
-    downloaded: bool
-    downloaded_date: datetime
-    error: bool
-    error_message: str
-    not_exists: bool
-    published_date: datetime
+    link_model: LinkModelPydantic
+    download_link: Optional[str]
+    downloaded: bool = False
+    downloaded_date: Optional[datetime]
+    error: bool = False
+    error_message: Optional[str]
+    not_exists: bool = False
+    published_date: Optional[datetime]
     category: str
-    invalid_download_link: bool
+    invalid_download_link: bool = False
 
 
-class DownloadLinks:
-    __root__: List[DownloadLink]
+class DownloadLinks(BaseModel):
+    __root__: List[DownloadLinkPydantic]
 
 
 class RequestHeaders(BaseModel):

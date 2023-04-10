@@ -1,6 +1,10 @@
 import os
+from dotenv import load_dotenv
+
 
 ROOT_PATH: str = os.path.dirname(os.path.abspath(__file__))
+env_path: str = os.path.join(ROOT_PATH, ".env")
+load_dotenv(env_path)
 
 
 def get_db_credentials() -> dict:
@@ -29,14 +33,19 @@ DB_CONFIG: dict = {
     "default_connection": "default",
 }
 
-LOGIN_URL: str = ''
-USERNAME: str = ''
-PASSWORD: str = ''
+LOGIN_URL: str = ""
+USERNAME: str = ""
+PASSWORD: str = ""
 
+
+CELERY_broker_url = "redis://redis:6379"
+result_backend = "redis://redis:6379"
+
+MANAGERS = ["krakenfiles.com"]
 
 try:
     from local_settings import *  # noqa
-    print('>> Loading local local_settings.py file')
-except Exception as e:
-    print(f'>> No local_settings.py file found ~ `{e}`')
 
+    print(">> Loading local local_settings.py file")
+except Exception as e:
+    print(f">> No local_settings.py file found ~ `{e}`")

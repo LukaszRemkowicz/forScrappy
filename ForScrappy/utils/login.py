@@ -1,7 +1,6 @@
 import hashlib
 
 import requests
-from requests import Session as SessionObj
 
 from models.entities import RequestHeaders
 from models.types import SessionObject
@@ -15,13 +14,13 @@ class User:
         headers: RequestHeaders = RequestHeaders()
 
         payload = {
-            'vb_login_username': USERNAME,
-            'vb_login_password': '',
-            's': '',
-            'securitytoken': 'guest',
-            'do': 'login',
-            'vb_login_md5password': (hashlib.md5(PASSWORD)).hexdigest(),
-            'vb_login_md5password_utf': (hashlib.md5(PASSWORD)).hexdigest()
+            "vb_login_username": USERNAME,
+            "vb_login_password": "",
+            "s": "",
+            "securitytoken": "guest",
+            "do": "login",
+            "vb_login_md5password": (hashlib.md5(PASSWORD)).hexdigest(),
+            "vb_login_md5password_utf": (hashlib.md5(PASSWORD)).hexdigest(),
         }
 
         session = requests.Session()
