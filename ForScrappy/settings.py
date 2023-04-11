@@ -35,7 +35,7 @@ DB_CONFIG: dict = {
 
 LOGIN_URL: str = ""
 USERNAME: str = ""
-PASSWORD: str = ""
+PASSWORD: bytes = b""
 
 
 CELERY_broker_url = "redis://redis:6379"
@@ -44,7 +44,7 @@ result_backend = "redis://redis:6379"
 MANAGERS = ["krakenfiles.com"]
 
 try:
-    from local_settings import *  # noqa
+    from local_settings import *  # noqa: F403, F401
 
     print(">> Loading local local_settings.py file")
 except Exception as e:

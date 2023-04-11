@@ -26,7 +26,7 @@ class ForClubUseCase:
         ...
 
     async def get_links(self) -> List[DownloadLinks]:
-        res: List[DownloadLinks] = await self.download_repo.filter(downloaded=False)
+        res: List[DownloadLinks] = await self.download_repo.filter(downloaded=False)  # type: ignore
 
         return res
 
