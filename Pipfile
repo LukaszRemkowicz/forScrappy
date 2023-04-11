@@ -23,6 +23,7 @@ redis = "*"
 flower = "*"
 python-dateutil = "*"
 types-requests = "*"
+types-beautifulsoup4 = "*"
 
 [dev-packages]
 black = "*"
