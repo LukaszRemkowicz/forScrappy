@@ -13,6 +13,13 @@ asyncpg = "*"
 psycopg2 = "*"
 tortoise-orm = "*"
 aerich = "*"
+typer = "*"
+validators = "*"
+lxml = "*"
+celery = "5.2"
+redis = "*"
+flower = "*"
+python-dateutil = "*"
 
 [dev-packages]
 black = "*"
@@ -22,6 +29,15 @@ pytest = "*"
 pytest-mock = "*"
 pytest-asyncio = "*"
 pytest-docker-compose = "*"
+bumpversion = "*"
+pipenv-setup = "*"
+vistir = "==0.6.1"
 
 [requires]
 python_version = "3.10"
+
+[scripts]
+bump-version-minor = "bumpversion minor"
+bump-version-major = "bumpversion major"
+bump-version-patch = "bumpversion patch"
+setup-sync = "pipenv-setup sync"

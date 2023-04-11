@@ -6,7 +6,7 @@ here = path.abspath(path.dirname(__file__))
 
 setup(
     name="for_scrappy",
-    version="1.0.0",
+    version="1.1.0",
     author="l.remkowicz",
     author_email="l.remkowicz@gmail.com",
     setup_requires=["setuptools>=38.6.0", "pytest"],
