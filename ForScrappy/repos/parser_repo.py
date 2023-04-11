@@ -37,9 +37,7 @@ class ForClubbersParser:
 
         logger.info("parsing forum. Looking for zippy links...")
         for filtered_link in filtered_list:
-
             if category in filtered_link:
-
                 html_regex = r"(.+)(html)(.+)"
                 link = re.sub(html_regex, r"\1\2", filtered_link)
 
@@ -51,7 +49,6 @@ class ForClubbersParser:
 
     @staticmethod
     async def parse_download_links(obj, url: str, category: str):
-
         #
         soupe = BeautifulSoup(
             obj.content, parse_only=SoupStrainer("div"), features="lxml"
