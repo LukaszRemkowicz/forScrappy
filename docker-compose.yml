@@ -1,8 +1,9 @@
-version: '3.4'
+version: '3.9'
 
 services:
   forscrappy:
     image: forscrappy
+    container_name: forscrappy
     build:
       context: .
       target: development
@@ -13,7 +14,7 @@ services:
         aliases:
           - app
     volumes:
-      - .:/4clubbers/ForScrappy
+      - .:/4clubbers
       - postgres:/vol/postgres
     environment:
       - CELERY_BROKER=redis://redis:6379/0
@@ -21,9 +22,11 @@ services:
     depends_on:
       - db
       - redis
+    command: "ls -la"
 
   db:
     image: postgres:alpine
+    container_name: postgres_forscrappy
     environment:
       - DB_HOST=${DB_HOST}
       - POSTGRES_DB=${DB_NAME}
@@ -58,6 +61,7 @@ services:
 
   redis:
     image: redis:alpine
+    container_name: redis
     ports:
       - "6379:6379"
     networks:
@@ -66,12 +70,14 @@ services:
           - redis
 
   celery:
-    restart: always
+    container_name: celery
     build:
       context: .
+      target: development
+    image: celery_forscrappy
     command: celery -A tasks worker -l INFO
     volumes:
-      - .:/4clubbers/ForScrappy
+      - ./ForScrappy:/4clubbers/ForScrappy
       - postgres:/vol/postgres
     environment:
       - DB_HOST=${DB_HOST}
@@ -84,17 +90,21 @@ services:
       - db
       - redis
       - forscrappy
+#    restart: always
     networks:
       services-network:
         aliases:
           - celery
+
   flower:
 #    image: mher/flower
     container_name: flower
-    build: .
+    build:
+      context: .
 #    command: [ 'flower', '--broker=redis://redis:6379', '--port=5555' ]
 #    command: celery --app=tasks --broker=${CELERY_BROKER_URL} flower --port=5557
-    command: celery --app=tasks flower --port=5555
+    image: flower_forscrappy
+    command: celery -A tasks flower --port=5555
     ports:
       - "5555:5555"
     environment:

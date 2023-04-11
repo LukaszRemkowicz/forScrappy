@@ -31,7 +31,8 @@ jobs:
           pipenv install -d
 
       - name: tests
-        run:  pipenv run pytest
+        run:  |
+          pipenv run pytest
 
   check_version:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
