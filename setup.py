@@ -6,7 +6,7 @@ here = path.abspath(path.dirname(__file__))
 
 setup(
     name="for_scrappy",
-    version="1.0.0",
+    version="1.1.0",
     author="l.remkowicz",
     author_email="l.remkowicz@gmail.com",
     setup_requires=["setuptools>=38.6.0", "pytest"],
@@ -43,7 +43,7 @@ setup(
         "pydantic==1.10.7",
         "pypika-tortoise==0.1.6; python_version >= '3.7' and python_version < '4.0'",
         "python-dateutil==2.8.2",
-        "python-dotenv==1.0.0",
+        "python-dotenv==1.1.0",
         "pytz==2023.3",
         "redis==4.5.4",
         "requests==2.28.2",
