@@ -2,7 +2,7 @@ import re
 from typing import List
 
 import validators
-from bs4 import BeautifulSoup, SoupStrainer, Tag, ResultSet  # type: ignore
+from bs4 import BeautifulSoup, SoupStrainer
 
 from logger import ColoredLogger, get_module_logger
 from models.entities import (
@@ -35,7 +35,7 @@ class ForClubbersParser:
             if link.get("href") and posts_pattern.search(link.get("href")):
                 filtered_list.append(link.get("href"))
 
-        logger.info(f"parsing forum. Looking for zippy links...")
+        logger.info("parsing forum. Looking for zippy links...")
         for filtered_link in filtered_list:
 
             if category in filtered_link:
@@ -77,10 +77,10 @@ class ForClubbersParser:
         result: list = []
 
         # 4clubbers date parser
-        date_parser: ResultSet[Tag] = BeautifulSoup(
-            obj.content, features="lxml"
-        ).select('td:has(a[name^="post"])')
-        date_string: str = str(date_parser[0].text).replace("\n", "").replace("\t", "")
+        # date_parser: ResultSet[Tag] = BeautifulSoup(
+        #     obj.content, features="lxml"
+        # ).select('td:has(a[name^="post"])')
+        # date_string: str = str(date_parser[0].text).replace("\n", "").replace("\t", "")
 
         # try:
         #     # parse_date = parser.parse(re.sub(regex_date, r'\3', soup.replace('\n', '')))

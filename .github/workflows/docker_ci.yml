@@ -25,6 +25,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          pip install flake8 mypy black
           python -m pip install --upgrade pip
           pip install pipenv
           pipenv install
@@ -33,6 +34,14 @@ jobs:
       - name: tests
         run:  |
           pipenv run pytest
+
+      - name: flake8
+        run:  |
+          flake8 .
+
+      - name: black
+        run:  |
+          black --check .
 
   check_version:
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
