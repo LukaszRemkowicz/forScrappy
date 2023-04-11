@@ -44,6 +44,8 @@ class ForClubUseCase:
                 link=obj.for_clubbers_url, category=category
             )
 
-            if download_links and (download_links_list := download_links.__root__):  # noqa: E999
+            if download_links and (
+                download_links_list := download_links.__root__  # noqa: E999
+            ):
                 for link in download_links_list:
                     await self.download_repo.get_or_create(link)

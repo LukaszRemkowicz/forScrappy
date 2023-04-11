@@ -18,7 +18,6 @@ class ForClubbersScrapper:
         self.parse: ForClubbersParser = ForClubbersParser()
 
     async def __fetch_data_get(self, url: str) -> Response:
-
         logger.info(f"Started parsing {url}")
         response: Response = self.session.get(
             url=url, cookies=self.session_cookies, headers=self.session_headers

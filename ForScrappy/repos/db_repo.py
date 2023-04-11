@@ -73,7 +73,6 @@ class DownloadRepo(BaseRepo):
         exists = await self.filter(link=obj.link)
 
         if exists:
-
             instance = (
                 await self.model.filter(link=obj.link)
                 .prefetch_related("link_model")
@@ -83,7 +82,6 @@ class DownloadRepo(BaseRepo):
             return_object: DownloadLinkPydantic = DownloadLinkPydantic(**instance_dict)
             created: bool = False
         else:
-
             link_model_data = obj.dict().pop("link_model")
             link_model, _ = await LinkModel.get_or_create(**link_model_data)
             obj.link_model = link_model

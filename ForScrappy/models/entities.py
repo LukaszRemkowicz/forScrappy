@@ -19,7 +19,6 @@ class Links(BaseModel):
 
 
 class DownloadLinkPydantic(BaseModel):
-
     name: Optional[str]
     link: str
     link_model: LinkModelPydantic

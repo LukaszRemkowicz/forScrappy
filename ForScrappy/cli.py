@@ -26,9 +26,7 @@ async def get_forum_links(
     link: str = typer.Option(..., "-link", help="Link to forum"),
     page: int = typer.Option(0, "-p", help="Forum page number to fetch"),
 ) -> None:
-
     async with DBConnectionHandler():
-
         async with LinkValidator(link):
             ...
 
