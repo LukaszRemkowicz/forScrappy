@@ -35,16 +35,18 @@ jobs:
           pipenv run pytest
 
   check_version:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Check version
         run: |
-          OLD_VERSION=$(git show HEAD:setup.py | grep -oP "version='\K[^']+")
-          NEW_VERSION=$(cat setup.py | grep -oP "version='\K[^']+")
+          OLD_VERSION=$(git show origin/main:setup.py | grep -oP 'version="\K[^"]+')
+          NEW_VERSION=$(git show HEAD:setup.py | grep -oP 'version="\K[^"]+')
 
           if [ "$OLD_VERSION" = "$NEW_VERSION" ]; then
             echo "Version number in setup.py was not updated."
