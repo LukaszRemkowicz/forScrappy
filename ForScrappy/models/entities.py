@@ -2,16 +2,16 @@ from datetime import datetime
 from random import choice
 from typing import Optional, Dict, List
 
-from pydantic.main import BaseModel
+from pydantic import BaseModel
 
 from utils.consts import USER_AGENTS
 
 
 class LinkModelPydantic(BaseModel):
-    name: Optional[str]
+    name: Optional[str] = None
     for_clubbers_url: str
     error: bool = False
-    error_message: Optional[str]
+    error_message: Optional[str] = None
 
 
 class Links(BaseModel):
@@ -19,16 +19,16 @@ class Links(BaseModel):
 
 
 class DownloadLinkPydantic(BaseModel):
-    name: Optional[str]
+    name: Optional[str] = None
     link: str
     link_model: LinkModelPydantic
-    download_link: Optional[str]
+    download_link: Optional[str] = None
     downloaded: bool = False
-    downloaded_date: Optional[datetime]
+    downloaded_date: Optional[datetime] = None
     error: bool = False
-    error_message: Optional[str]
+    error_message: Optional[str] = None
     not_exists: bool = False
-    published_date: Optional[datetime]
+    published_date: Optional[datetime] = None
     category: str
     invalid_download_link: bool = False
 

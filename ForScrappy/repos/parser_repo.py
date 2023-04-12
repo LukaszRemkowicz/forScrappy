@@ -1,5 +1,5 @@
 import re
-from typing import List
+from typing import List, Optional
 
 import validators
 from bs4 import BeautifulSoup, SoupStrainer
@@ -11,6 +11,7 @@ from models.entities import (
     DownloadLinks,
     DownloadLinkPydantic,
 )
+from models.models import LinkModel
 from repos.handlers import LinkModelHandler
 from settings import MANAGERS
 
@@ -87,7 +88,7 @@ class ForClubbersParser:
         #     # breakpoint()
         #     return ''
 
-        link_instance: LinkModelPydantic = await LinkModelHandler.get_obj(
+        link_instance: Optional[LinkModel] = await LinkModelHandler.get_obj(
             for_clubbers_url=url
         )
         if link_instance:
@@ -100,7 +101,7 @@ class ForClubbersParser:
                 DownloadLinkPydantic(
                     link=link,
                     category=category,
-                    link_model=link_model.dict(),
+                    link_model=link_model,
                 )
             )
 
