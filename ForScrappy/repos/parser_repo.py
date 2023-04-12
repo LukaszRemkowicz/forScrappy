@@ -23,7 +23,6 @@ class ForClubbersParser:
     async def parse_object(obj, category) -> Links:
         soup = BeautifulSoup(obj.text, parse_only=SoupStrainer("td"), features="lxml")
         all_a_href_tags = soup.findAll("a")
-        # regex = re.compile(rf'{category}/\d.?')
 
         if not isinstance(category, str):
             category = str(category)
@@ -36,7 +35,7 @@ class ForClubbersParser:
             if link.get("href") and posts_pattern.search(link.get("href")):
                 filtered_list.append(link.get("href"))
 
-        logger.info("parsing forum. Looking for zippy links...")
+        logger.info("Parsing forum. Looking for download links...")
         for filtered_link in filtered_list:
             if category in filtered_link:
                 html_regex = r"(.+)(html)(.+)"
