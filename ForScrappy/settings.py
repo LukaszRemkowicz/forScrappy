@@ -33,19 +33,11 @@ DB_CONFIG: dict = {
     "default_connection": "default",
 }
 
-LOGIN_URL: str = ""
-USERNAME: str = ""
-PASSWORD: bytes = b""
-
+LOGIN_URL: str = os.getenv("DB_HOST", "LOGIN_URL")
+USERNAME: str = os.getenv("DB_HOST", "USERNAME")
+PASSWORD: str = os.getenv("DB_HOST", "PASSWORD")
 
 CELERY_broker_url = "redis://redis:6379"
 result_backend = "redis://redis:6379"
 
 MANAGERS = ["krakenfiles.com"]
-
-try:
-    from local_settings import *  # noqa: F403, F401
-
-    print(">> Loading local local_settings.py file")
-except Exception as e:
-    print(f">> No local_settings.py file found ~ `{e}`")

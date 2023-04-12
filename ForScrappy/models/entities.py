@@ -2,7 +2,7 @@ from datetime import datetime
 from random import choice
 from typing import Optional, Dict, List
 
-from pydantic.main import BaseModel
+from pydantic import BaseModel
 
 from utils.consts import USER_AGENTS
 

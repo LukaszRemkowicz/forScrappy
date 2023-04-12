@@ -12,15 +12,17 @@ class User:
     def login() -> SessionObject:
         base_url: str = LOGIN_URL
         headers: RequestHeaders = RequestHeaders()
-
+        breakpoint()
         payload = {
             "vb_login_username": USERNAME,
             "vb_login_password": "",
             "s": "",
             "securitytoken": "guest",
             "do": "login",
-            "vb_login_md5password": (hashlib.md5(PASSWORD)).hexdigest(),
-            "vb_login_md5password_utf": (hashlib.md5(PASSWORD)).hexdigest(),
+            "vb_login_md5password": (hashlib.md5(bytes(PASSWORD, "utf-8"))).hexdigest(),
+            "vb_login_md5password_utf": (
+                hashlib.md5(bytes(PASSWORD, "utf-8"))
+            ).hexdigest(),
         }
 
         session = requests.Session()
