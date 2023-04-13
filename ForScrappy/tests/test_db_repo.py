@@ -14,4 +14,6 @@ async def test_db_handler():
 
     async with DBConnectionHandler():
         assert Tortoise.is_connected  # noqa
-        assert Tortoise.get_connection("default").database == os.getenv("POSTGRES_TEST_DB_NAME")  # noqa
+        assert Tortoise.get_connection("default").database == os.getenv(  # noqa
+            "POSTGRES_TEST_DB_NAME"
+        )

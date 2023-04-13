@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 import pytest
 from pytest_docker.plugin import Services
@@ -9,21 +10,19 @@ from utils.exceptions import TestDBWrongCredentialsError
 
 
 @pytest.fixture(scope="session")
-def docker_compose_file(pytestconfig):  # noqa
-    docker_path: str = os.path.join(
-        ROOT_PATH, "tests", "docker-compose-test.yml"
-    )
+def docker_compose_file(pytestconfig) -> str:  # noqa
+    docker_path: str = os.path.join(ROOT_PATH, "tests", "docker-compose-test.yml")
     return docker_path
 
 
 @pytest.fixture(scope="session")
-def test_db_credentials():
+def test_db_credentials() -> dict:
     """Returns test database credentials"""
 
     test_credentials: dict = {
         "NAME": os.getenv("POSTGRES_TEST_DB_NAME", "test_db"),
         "USER": os.getenv("POSTGRES_TEST_USER", "postgres"),
-        "PASSWORD": os.getenv("POSTGRES_TEST_PASSWORD", "postgres")
+        "PASSWORD": os.getenv("POSTGRES_TEST_PASSWORD", "postgres"),
     }
 
     return test_credentials
@@ -40,9 +39,9 @@ def db_connection(
 
     :return dict: db credentials
     """
-    user: str = test_db_credentials.get("USER")
-    password: str = test_db_credentials.get("PASSWORD")
-    db_name: str = test_db_credentials.get("NAME")
+    user: Optional[str] = test_db_credentials.get("USER")
+    password: Optional[str] = test_db_credentials.get("PASSWORD")
+    db_name: Optional[str] = test_db_credentials.get("NAME")
 
     if not user or not db_name or not password:
         raise TestDBWrongCredentialsError()

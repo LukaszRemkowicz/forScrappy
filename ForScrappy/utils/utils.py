@@ -50,11 +50,13 @@ class LinkValidator:
         if validators.url(self.link) is not True or not self.link.endswith("/"):
             raise URLNotValidFormat(url=self.link)
 
-        pattern = rf'{BASE_URL_PATTERN}'
+        pattern = rf"{BASE_URL_PATTERN}"
         match = re.match(pattern, self.link)
 
         if not match:
-            raise URLNotValidFormat(custom_msg=f"Wrong url format. Expected: {BASE_URL}/category/")
+            raise URLNotValidFormat(
+                custom_msg=f"Wrong url format. Expected: {BASE_URL}/category/"
+            )
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         ...
