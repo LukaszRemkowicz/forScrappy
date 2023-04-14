@@ -2,11 +2,11 @@ version: '3.8'
 
 services:
   test_db:
-    image: postgres:15.1-alpine
+    image: postgres:alpine
     environment:
-      - POSTGRES_DB=${POSTGRES_TEST_DB_NAME}
-      - POSTGRES_USER=${POSTGRES_TEST_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_TEST_PASSWORD}
+      - POSTGRES_DB=${TEST_DB__NAME}
+      - POSTGRES_USER=${TEST_DB__USERNAME}
+      - POSTGRES_PASSWORD=${TEST_DB__PASSWORD}
     ports:
       - "5455:5432"
     restart: always

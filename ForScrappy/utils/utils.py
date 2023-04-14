@@ -1,11 +1,16 @@
 import re
+from time import sleep
 
 from asyncpg import CannotConnectNowError
 from tortoise import Tortoise
 import validators
 
-from settings import DB_CONFIG, BASE_URL, BASE_URL_PATTERN
+from logger import ColoredLogger, get_module_logger
+from settings import DB_CONFIG, settings
 from utils.exceptions import DBConnectionError, URLNotValidFormat
+
+
+logger: ColoredLogger = get_module_logger("utils")
 
 
 def get_db_connections():
@@ -21,16 +26,20 @@ class DBConnectionHandler:
     async def __aenter__(self) -> None:
         """Open database connection"""
         await Tortoise.init(config=get_db_connections())
+
+        retry: int = 0
+
         while True:
-            retry: int = 0
             try:
-                if retry >= 5:
-                    raise DBConnectionError()
                 await Tortoise.generate_schemas()
                 setattr(Tortoise, "is_connected", True)
                 break
             except (ConnectionError, CannotConnectNowError):
                 retry += 1
+                logger.critical(f"Cannot connect to database. Retrying...{retry}")
+                sleep(1)
+                if retry >= 5:
+                    raise DBConnectionError()
                 pass
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -50,12 +59,12 @@ class LinkValidator:
         if validators.url(self.link) is not True or not self.link.endswith("/"):
             raise URLNotValidFormat(url=self.link)
 
-        pattern = rf"{BASE_URL_PATTERN}"
+        pattern = rf"{settings.local.base_url_pattern}"
         match = re.match(pattern, self.link)
 
         if not match:
             raise URLNotValidFormat(
-                custom_msg=f"Wrong url format. Expected: {BASE_URL}/category/"
+                custom_msg=f"Wrong url format. Expected: {settings.local.base_url}/category/"
             )
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:

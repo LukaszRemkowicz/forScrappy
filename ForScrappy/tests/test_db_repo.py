@@ -1,8 +1,7 @@
-import os
-
 import pytest
 from tortoise import Tortoise
 
+from settings import settings
 from utils.utils import DBConnectionHandler
 
 
@@ -14,6 +13,6 @@ async def test_db_handler():
 
     async with DBConnectionHandler():
         assert Tortoise.is_connected  # noqa
-        assert Tortoise.get_connection("default").database == os.getenv(  # noqa
-            "POSTGRES_TEST_DB_NAME"
-        )
+        assert (
+            Tortoise.get_connection("default").database == settings.test_db.name
+        )  # noqa
