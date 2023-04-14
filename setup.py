@@ -1,12 +1,12 @@
 from os import path
 
-from setuptools import setup
+from distutils.core import setup
 
 here = path.abspath(path.dirname(__file__))
 
 setup(
     name="for_scrappy",
-    version="1.1.0",
+    version="1.2.0",
     author="l.remkowicz",
     author_email="l.remkowicz@gmail.com",
     setup_requires=["setuptools>=38.6.0", "pytest"],
@@ -34,7 +34,7 @@ setup(
         "or (platform_machine == 'AMD64' or (platform_machine == 'win32' or platform_machine == 'WIN32')))))",
         "humanize==4.6.0; python_version >= '3.7'",
         "idna==3.4; python_version >= '3.5'",
-        "iso8601==1.1.0; python_version < '4.0' and python_full_version >= '3.6.2'",
+        "iso8601==1.2.0; python_version < '4.0' and python_full_version >= '3.6.2'",
         "kombu==5.2.4; python_version >= '3.7'",
         "lxml==4.9.2",
         "prometheus-client==0.16.0; python_version >= '3.6'",
@@ -43,7 +43,7 @@ setup(
         "pydantic==1.10.7",
         "pypika-tortoise==0.1.6; python_version >= '3.7' and python_version < '4.0'",
         "python-dateutil==2.8.2",
-        "python-dotenv==1.1.0",
+        "python-dotenv==1.2.0",
         "pytz==2023.3",
         "redis==4.5.4",
         "requests==2.28.2",

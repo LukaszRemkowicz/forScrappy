@@ -1,3 +1,5 @@
+from typing import Optional
+
 from requests import Response
 
 from logger import ColoredLogger, get_module_logger
@@ -11,14 +13,15 @@ logger: ColoredLogger = get_module_logger("api_repo")
 class ForClubbersScrapper:
     """Base repo responsible for handling requests"""
 
-    def __init__(self, session_obj: SessionObject) -> None:
-        self.session = session_obj.session
-        self.session_headers = session_obj.headers
-        self.session_cookies = session_obj.cookie
+    def __init__(self, session_obj: Optional[SessionObject] = None) -> None:
+        if session_obj:
+            self.session = session_obj.session
+            self.session_headers = session_obj.headers
+            self.session_cookies = session_obj.cookie
         self.parse: ForClubbersParser = ForClubbersParser()
 
     async def __fetch_data_get(self, url: str) -> Response:
-
+        # TODO add fetching from request session, not only 4clubbers session object
         logger.info(f"Started parsing {url}")
         response: Response = self.session.get(
             url=url, cookies=self.session_cookies, headers=self.session_headers

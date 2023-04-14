@@ -1,19 +1,70 @@
 import os
-from dotenv import load_dotenv
+
+from pydantic import BaseSettings, SecretStr
+
+ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
+PARENT_PATH = os.path.dirname(ROOT_PATH)
 
 
-ROOT_PATH: str = os.path.dirname(os.path.abspath(__file__))
-env_path: str = os.path.join(ROOT_PATH, "../.env")
-load_dotenv(env_path)
+class CelerySettings(BaseSettings):
+    """Celery settings"""
+
+    broker_url: str
+    result_backend: str
+
+
+class LocalRepoSettings(BaseSettings):
+    """Local settings"""
+
+    login_url: str
+    username: str
+    password: SecretStr
+    base_url: str
+    base_url_pattern: str
+
+
+class DatabaseSettings(BaseSettings):
+    """Database settings"""
+
+    host: str = "localhost"
+    port: int = 5432
+    username: str = "postgres"
+    password: SecretStr = SecretStr("postgres")
+    name: str = "postgres"
+
+
+class TestDatabaseSettings(BaseSettings):
+    """Database settings"""
+
+    username: str
+    password: SecretStr
+    name: str
+
+
+class Settings(BaseSettings):
+    """General settings for application"""
+
+    celery: CelerySettings
+    local: LocalRepoSettings
+    db: DatabaseSettings
+    test_db: TestDatabaseSettings
+
+    class Config:
+        env_file = os.path.join(PARENT_PATH, ".env")
+        env_file_encoding = "utf-8"
+        env_nested_delimiter = "__"
+
+
+settings = Settings()
 
 
 def get_db_credentials() -> dict:
     return {
-        "host": os.getenv("DB_HOST", "localhost"),
-        "port": os.getenv("DB_PORT", 5432),
-        "user": os.getenv("DB_USERNAME", "postgres"),
-        "password": os.getenv("DB_PASSWORD", "postgres"),
-        "database": os.getenv("DB_NAME", "postgres"),
+        "host": settings.db.host,
+        "port": settings.db.port,
+        "user": settings.db.username,
+        "password": settings.db.password.get_secret_value(),
+        "database": settings.db.name,
     }
 
 
@@ -33,19 +84,9 @@ DB_CONFIG: dict = {
     "default_connection": "default",
 }
 
-LOGIN_URL: str = ""
-USERNAME: str = ""
-PASSWORD: str = ""
-
-
-CELERY_broker_url = "redis://redis:6379"
-result_backend = "redis://redis:6379"
 
 MANAGERS = ["krakenfiles.com"]
 
-try:
-    from local_settings import *  # noqa
 
-    print(">> Loading local local_settings.py file")
-except Exception as e:
-    print(f">> No local_settings.py file found ~ `{e}`")
+CELERY_broker_url = settings.celery.broker_url
+result_backend = settings.celery.result_backend

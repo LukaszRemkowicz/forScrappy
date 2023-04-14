@@ -6,7 +6,6 @@ class BaseModel(Model):
     async def to_dict(self):
         res = {}
         for field_name, field in self._meta.fields_map.items():
-
             if isinstance(field, ForeignKeyFieldInstance):
                 related_instance_id = getattr(self, f"{field_name}_id")
                 related_instance = await field.related_model.get(id=related_instance_id)
@@ -40,7 +39,6 @@ class LinkModel(BaseModel):
 
 
 class DownloadLinks(BaseModel):
-
     name = fields.CharField(
         max_length=1000, null=True, blank=True, description="Song name"
     )

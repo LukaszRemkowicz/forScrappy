@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 from settings import ROOT_PATH
@@ -30,7 +31,7 @@ class ColoredFormatter(logging.Formatter):
             + self.reset,
         }
 
-    def __init__(self, use_color=True):
+    def __init__(self, use_color: bool = True) -> None:
         logging.Formatter.__init__(self)
         self.use_color = use_color
         self.grey: str = "\x1b[38;20m"
@@ -52,8 +53,8 @@ class ColoredFormatter(logging.Formatter):
 class ColoredLogger(logging.Logger):
     """Custom logger with extra levels"""
 
-    def __init__(self, name):
-        logging.Logger.__init__(self, name, logging.DEBUG)
+    def __init__(self, name: str) -> None:
+        super().__init__(name, logging.DEBUG)
         logging.addLevelName(90, "WELCOME_MSG")
 
         color_formatter: ColoredFormatter = ColoredFormatter()
@@ -63,10 +64,10 @@ class ColoredLogger(logging.Logger):
 
         log_dir: str = os.path.join(ROOT_PATH, "logs")
 
-        if not os.path.exists(log_dir):
+        if not Path(log_dir).exists():
             os.mkdir(log_dir)
 
-        file_handler: logging = logging.FileHandler(
+        file_handler: logging.FileHandler = logging.FileHandler(
             f"{log_dir}/{datetime.now().date()}.log"
         )
 

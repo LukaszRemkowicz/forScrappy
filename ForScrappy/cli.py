@@ -26,13 +26,11 @@ async def get_forum_links(
     link: str = typer.Option(..., "-link", help="Link to forum"),
     page: int = typer.Option(0, "-p", help="Forum page number to fetch"),
 ) -> None:
-
     async with DBConnectionHandler():
-
         async with LinkValidator(link):
             ...
 
-        category: str = validate_category(link.split("/")[-2])
+        category: str = validate_category(link=link)
 
         session_obj: SessionObject = User.login()
         sleep(3)
