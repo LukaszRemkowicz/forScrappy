@@ -5,8 +5,15 @@ import pytest
 from pytest_docker.plugin import Services
 from pytest_mock import MockerFixture
 
-from settings import ROOT_PATH, DB_CONFIG
+from settings import ROOT_PATH, DB_CONFIG, settings, PARENT_PATH
 from utils.exceptions import TestDBWrongCredentialsError
+
+
+from dotenv import load_dotenv
+
+env_path: str = os.path.join(PARENT_PATH, ".env")
+
+load_dotenv(env_path)
 
 
 @pytest.fixture(scope="session")
@@ -20,9 +27,9 @@ def test_db_credentials() -> dict:
     """Returns test database credentials"""
 
     test_credentials: dict = {
-        "NAME": os.getenv("POSTGRES_TEST_DB_NAME", "test_db"),
-        "USER": os.getenv("POSTGRES_TEST_USER", "postgres"),
-        "PASSWORD": os.getenv("POSTGRES_TEST_PASSWORD", "postgres"),
+        "NAME": settings.test_db.name,
+        "USER": settings.test_db.username,
+        "PASSWORD": settings.test_db.password.get_secret_value(),
     }
 
     return test_credentials

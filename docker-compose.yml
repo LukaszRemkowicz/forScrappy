@@ -22,18 +22,17 @@ services:
     depends_on:
       - db
       - redis
-    command: "ls -la"
 
   db:
     image: postgres:alpine
     container_name: postgres_forscrappy
     environment:
-      - DB_HOST=${DB_HOST}
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USERNAME}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB__HOST}
+      - POSTGRES_DB=${DB__NAME}
+      - POSTGRES_USER=${DB__USERNAME}
+      - POSTGRES_PASSWORD=${DB__PASSWORD}
     ports:
-      - "${DB_PORT}:5432/tcp"
+      - "${DB__PORT}:5432/tcp"
     restart: always
     networks:
       services-network:
@@ -51,7 +50,7 @@ services:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
     ports:
-      - "${PG_ADMIN_PORT}:80"
+      - "${PGADMIN_PORT}:80"
     depends_on:
       - db
     networks:
@@ -80,12 +79,12 @@ services:
       - ./ForScrappy:/4clubbers/ForScrappy
       - postgres:/vol/postgres
     environment:
-      - DB_HOST=${DB_HOST}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USERNAME}
-      - DB_PASS=${DB_PASSWORD}
-      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
-      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+      - DB_HOST=${DB__HOST}
+      - DB_NAME=${DB__NAME}
+      - DB_USER=${DB__USERNAME}
+      - DB_PASS=${DB__PASSWORD}
+      - CELERY_BROKER_URL=${CELERY__BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY__RESULT_BACKEND}
     depends_on:
       - db
       - redis
@@ -108,8 +107,8 @@ services:
     ports:
       - "5555:5555"
     environment:
-      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
-      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+      - CELERY_BROKER_URL=${CELERY__BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY__RESULT_BACKEND}
     depends_on:
       - forscrappy
       - redis
