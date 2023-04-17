@@ -5,7 +5,7 @@ import typer
 
 from models.models import DownloadLinks
 from models.types import SessionObject
-from repos.api_repo import ForClubbersScrapper
+from repos.request_repo import ForClubbersScrapper
 from repos.db_repo import LinkRepo, DownloadRepo
 from use_case.use_case import ForClubUseCase
 from utils.decorators import be_async

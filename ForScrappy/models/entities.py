@@ -14,7 +14,7 @@ class LinkModelPydantic(BaseModel):
     error_message: Optional[str] = None
 
 
-class Links(BaseModel):
+class LinksModelPydantic(BaseModel):
     __root__: List[LinkModelPydantic]
 
 
@@ -33,7 +33,7 @@ class DownloadLinkPydantic(BaseModel):
     invalid_download_link: bool = False
 
 
-class DownloadLinks(BaseModel):
+class DownloadLinksPydantic(BaseModel):
     __root__: List[DownloadLinkPydantic]
 
 

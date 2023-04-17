@@ -24,6 +24,7 @@ flower = "*"
 python-dateutil = "*"
 types-requests = "*"
 types-beautifulsoup4 = "*"
+types-python-dateutil = "*"
 
 [dev-packages]
 black = "*"
@@ -43,7 +44,7 @@ vistir = "==0.6.1"
 python_version = "3.10"
 
 [scripts]
-bump-version-minor = "bumpversion minor"
 bump-version-major = "bumpversion major"
+bump-version-minor = "bumpversion minor"
 bump-version-patch = "bumpversion patch"
 setup-sync = "pipenv-setup sync"

@@ -8,6 +8,7 @@ app = Celery(
     backend=settings.result_backend,
     namespace="CELERY",
     imports="tasks.tasks",
+    timezone="Europe/Warsaw",
 )
 
 # app = Celery('tasks')

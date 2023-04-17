@@ -28,12 +28,18 @@ class BaseRepo:
             return res
         return None
 
-    async def save(self, **kwargs) -> Optional[LinkModel | DownloadLinks]:
-        """Save LinkModelPydantic instance to database"""
+    # async def save(self, **kwargs) -> Optional[LinkModel | DownloadLinks]:
+    #     """Save LinkModelPydantic instance to database"""
+    #     if self.model:
+    #         res: DownloadLinks | LinkModel = await self.model.create(**kwargs)
+    #         logger.info(f"Object with id {res.pk} created")
+    #         return res
+    #     return None
+
+    async def save(self, **kwargs):
         if self.model:
-            res: DownloadLinks | LinkModel = await self.model.create(**kwargs)
-            logger.info(f"Object with id {res.pk} created")
-            return res
+            obj = self.model(**kwargs)
+            await obj.save(**kwargs)
         return None
 
     async def all(self) -> List[DownloadLinks | LinkModel]:
@@ -70,7 +76,7 @@ class LinkRepo(BaseRepo):
 class DownloadRepo(BaseRepo):
     model = DownloadLinks
 
-    async def get_or_create(self, obj) -> Tuple[Optional[DownloadLinkPydantic], bool]:  # type: ignore
+    async def get_or_create(self, obj: DownloadLinkPydantic) -> Tuple[Optional[DownloadLinkPydantic], bool]:  # type: ignore
         exists = await self.filter(link=obj.link)
         created: bool = False
         return_object: Optional[DownloadLinkPydantic] = None
@@ -88,7 +94,7 @@ class DownloadRepo(BaseRepo):
         else:
             link_model_data = obj.dict().pop("link_model")
             link_model, _ = await LinkModel.get_or_create(**link_model_data)
-            obj.link_model = link_model
+            obj.link_model = LinkModelPydantic(**link_model.__dict__)
             object_created = await self.create(obj)
 
             if object_created:

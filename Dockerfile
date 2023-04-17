@@ -6,6 +6,9 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
+RUN ln -sf /usr/share/zoneinfo/Europe/Warsaw /etc/timezone && \
+    ln -sf /usr/share/zoneinfo/Europe/Warsaw /etc/localtime
+
 RUN pip install --upgrade pip --no-cache-dir
 
 RUN apk update
