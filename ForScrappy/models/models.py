@@ -17,7 +17,7 @@ class BaseModel(Model):
 
 
 class LinkModel(BaseModel):
-    name = fields.CharField(max_length=100, null=True, description="Song name")
+    name = fields.CharField(max_length=100, null=True, description="Topic name")
     for_clubbers_url = fields.CharField(
         max_length=2000, null=True, unique=True, description="Forum url"
     )
@@ -76,7 +76,7 @@ class DownloadLinks(BaseModel):
         default="False", description="if file not exists on server, set to True"
     )
     published_date = fields.DateField(
-        max_length=100, null=True, blank=True, description="Published on server date"
+        null=True, blank=True, description="Published on server date"
     )
     category = fields.CharField(
         max_length=20, null=True, blank=True, description="Category: trance or house"

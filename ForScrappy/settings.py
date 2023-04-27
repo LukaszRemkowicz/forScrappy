@@ -1,4 +1,5 @@
 import os
+import re
 
 from pydantic import BaseSettings, SecretStr
 
@@ -58,6 +59,17 @@ class Settings(BaseSettings):
 settings = Settings()
 
 
+if os.environ.get("ENVIRONMENT") == "local":
+    pattern = r"(?<=redis://)[^:]+(?=:)"
+    replaced = re.sub(pattern, "localhost", settings.celery.broker_url)
+
+    settings.celery.broker_url = replaced
+    settings.celery.result_backend = replaced
+    settings.db.host = "localhost"
+else:
+    settings.db.port = 5432
+
+
 def get_db_credentials() -> dict:
     return {
         "host": settings.db.host,
@@ -90,3 +102,4 @@ MANAGERS = ["krakenfiles.com"]
 
 CELERY_broker_url = settings.celery.broker_url
 result_backend = settings.celery.result_backend
+CELERY_TIMEZONE = "Europe/Warsaw"

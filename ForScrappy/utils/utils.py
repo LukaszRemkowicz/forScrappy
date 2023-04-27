@@ -39,7 +39,9 @@ class DBConnectionHandler:
                 logger.critical(f"Cannot connect to database. Retrying...{retry}")
                 sleep(1)
                 if retry >= 5:
-                    raise DBConnectionError()
+                    raise DBConnectionError(
+                        f"Cannot connect to database. Tried {retry} times. Closing..."
+                    )
                 pass
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
