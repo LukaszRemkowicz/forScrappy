@@ -22,6 +22,7 @@ class BaseRepo:
     ) -> Optional[DownloadLinks | LinkModel]:
         """Save LinkModelPydantic instance to database"""
         if self.model:
+            # TODO dodac dodanie pk z LinkModel. Jak to zrobic?
             res: DownloadLinks | LinkModel = await self.model.create(**obj.dict())
             logger.info(f"Object with id {res.pk} created")
 
@@ -53,8 +54,15 @@ class BaseRepo:
     ) -> Tuple[LinkModelPydantic | DownloadLinkPydantic, bool]:
         raise NotImplementedError
 
+    @staticmethod
+    async def update_fields(obj: DownloadLinks | LinkModel, **kwargs):
+        for key, value in kwargs.items():
+            setattr(obj, key, value)
+        await obj.save()
+        logger.info(f'Object updated: {obj.pk}')
 
-class LinkRepo(BaseRepo):
+
+class LinkModelRepo(BaseRepo):
     model = LinkModel
 
     async def get_or_create(self, obj) -> Tuple[LinkModelPydantic, bool]:
@@ -73,7 +81,7 @@ class LinkRepo(BaseRepo):
         return return_object, created
 
 
-class DownloadRepo(BaseRepo):
+class DownloadLinksRepo(BaseRepo):
     model = DownloadLinks
 
     async def get_or_create(self, obj: DownloadLinkPydantic) -> Tuple[Optional[DownloadLinkPydantic], bool]:  # type: ignore

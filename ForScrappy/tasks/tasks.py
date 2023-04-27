@@ -1,9 +1,17 @@
 import asyncio
-from typing import Optional
+import cgi
+import datetime
+import shutil
+from pathlib import Path
+from typing import Optional, Type, Dict
 
 from celery import shared_task
+from requests import Session
 
-from models.models import LinkModel
+from models.models import LinkModel, DownloadLinks
+from settings import settings
+from use_case.managers.kraken import ManagerType
+from utils.exceptions import HashNotFoundException, LinkPostFailure
 from utils.utils import DBConnectionHandler
 
 
@@ -24,4 +32,45 @@ def update_thread_name(thread_name: str, url: str) -> dict:
             return {"status": "object name not updated. Name is already set"}
 
     result: dict = asyncio.get_event_loop().run_until_complete(do_save_topic_name())
+    return result
+
+
+@shared_task
+def download_file(
+    object_id: int,
+    dl_link: str,
+    headers: Dict[str, str],
+    file_path: Path,
+    session: Session = Session(),
+) -> dict:
+    """download file and update object in database"""
+
+    path = Path(settings.custom_download_path) / file_path
+
+    if not path.exists():
+        path.mkdir(parents=True, exist_ok=True)
+
+    new_file_path: Optional[Path]
+
+    with session.get(dl_link, headers=headers, stream=True) as r:
+        _, params = cgi.parse_header(r.headers["content-disposition"])
+        file_name = params["filename"]
+        new_file_path = Path(path) / file_name
+        with open(new_file_path, "wb") as f:
+            shutil.copyfileobj(r.raw, f)
+
+    async def handle_response() -> dict:
+
+        async with DBConnectionHandler():
+            obj: Optional[DownloadLinks] = await DownloadLinks.filter(pk=object_id).first()
+            obj.downloaded = True
+            obj.downloaded_date = datetime.datetime.now()
+
+            await obj.save()
+            await obj.refresh_from_db()
+
+            response: dict = {"status": "success", "object pk": obj.pk}
+            return response
+
+    result: dict = asyncio.get_event_loop().run_until_complete(handle_response())
     return result

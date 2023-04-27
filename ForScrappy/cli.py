@@ -6,7 +6,7 @@ import typer
 from models.models import DownloadLinks
 from models.types import SessionObject
 from repos.request_repo import ForClubbersScrapper
-from repos.db_repo import LinkRepo, DownloadRepo
+from repos.db_repo import LinkModelRepo, DownloadLinksRepo
 from use_case.use_case import ForClubUseCase
 from utils.decorators import be_async
 from utils.login import User
@@ -35,8 +35,8 @@ async def get_forum_links(
         session_obj: SessionObject = User.login()
         sleep(3)
         forum_use_case: ForClubUseCase = ForClubUseCase(
-            link_repo=LinkRepo,
-            download_repo=DownloadRepo,
+            link_repo=LinkModelRepo,
+            download_repo=DownloadLinksRepo,
             repo_scrapper=ForClubbersScrapper,
             session_obj=session_obj,
         )
@@ -60,15 +60,37 @@ async def get_forum_links(
 @be_async
 async def download_fetched() -> None:
     forum_use_case: ForClubUseCase = ForClubUseCase(
-        link_repo=LinkRepo,
-        download_repo=DownloadRepo,
+        link_repo=LinkModelRepo,
+        download_repo=DownloadLinksRepo,
         repo_scrapper=ForClubbersScrapper,
     )
+    async with DBConnectionHandler():
 
-    res: List[DownloadLinks] = await forum_use_case.get_links()
+        res: List[DownloadLinks] = await forum_use_case.get_links()
 
-    for link in res:
-        await forum_use_case.download_file(link=link)
+        for link_obj in res:
+            await forum_use_case.download_file(link_obj=link_obj)
+
+    logger.info("Command download-fetched with success")
+
+
+@app.command(help="Get links with errors. Make sure celery tasks are completed")
+@be_async
+async def files_with_errors() -> None:
+    forum_use_case: ForClubUseCase = ForClubUseCase(
+        link_repo=LinkModelRepo,
+        download_repo=DownloadLinksRepo,
+        repo_scrapper=ForClubbersScrapper,
+    )
+    async with DBConnectionHandler():
+        res: List[DownloadLinks] = await forum_use_case.get_links_with_errors()
+
+        if res:
+            logger.info("LinksModelPydantic with errors:")
+            for link in res:
+                logger.info(f"{link.link} - {link.error}")
+        else:
+            logger.info("No links with errors found")
 
 
 if __name__ == "__main__":
