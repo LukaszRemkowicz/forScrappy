@@ -1,5 +1,6 @@
 import os
 import re
+from pathlib import Path
 
 from pydantic import BaseSettings, SecretStr
 
@@ -49,15 +50,27 @@ class Settings(BaseSettings):
     local: LocalRepoSettings
     db: DatabaseSettings
     test_db: TestDatabaseSettings
+    download_path: str
+    kraken_base_url: str
 
     class Config:
         env_file = os.path.join(PARENT_PATH, ".env")
         env_file_encoding = "utf-8"
         env_nested_delimiter = "__"
 
+    @property
+    def custom_download_path(self) -> str:
+        if ROOT_PATH:
+            path: Path = Path(ROOT_PATH) / self.download_path
+            if not path.exists():
+                path.mkdir()
+
+            return str(path)
+        else:
+            return self.download_path
+
 
 settings = Settings()
-
 
 if os.environ.get("ENVIRONMENT") == "local":
     pattern = r"(?<=redis://)[^:]+(?=:)"
@@ -66,7 +79,6 @@ if os.environ.get("ENVIRONMENT") == "local":
     settings.celery.broker_url = replaced
     settings.celery.result_backend = replaced
     settings.db.host = "localhost"
-else:
     settings.db.port = 5432
 
 
@@ -97,7 +109,7 @@ DB_CONFIG: dict = {
 }
 
 
-MANAGERS = ["krakenfiles.com"]
+MANAGERS = ["krakenfiles"]
 
 
 CELERY_broker_url = settings.celery.broker_url

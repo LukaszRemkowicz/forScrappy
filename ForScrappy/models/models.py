@@ -60,7 +60,7 @@ class DownloadLinks(BaseModel):
     downloaded = fields.BooleanField(
         default=False, description="State saying if file is download or not"
     )
-    downloaded_date = fields.DateField(
+    downloaded_date = fields.DatetimeField(
         null=True, blank=True, description="Downloaded date"
     )
     error = fields.BooleanField(
@@ -75,7 +75,7 @@ class DownloadLinks(BaseModel):
     not_exists = fields.BooleanField(
         default="False", description="if file not exists on server, set to True"
     )
-    published_date = fields.DateField(
+    published_date = fields.DatetimeField(
         null=True, blank=True, description="Published on server date"
     )
     category = fields.CharField(

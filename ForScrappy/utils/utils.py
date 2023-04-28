@@ -1,5 +1,7 @@
 import re
+from datetime import datetime
 from time import sleep
+from typing import Dict
 
 from asyncpg import CannotConnectNowError
 from tortoise import Tortoise
@@ -8,7 +10,7 @@ import validators
 from logger import ColoredLogger, get_module_logger
 from settings import DB_CONFIG, settings
 from utils.exceptions import DBConnectionError, URLNotValidFormat
-
+from utils.schemas import DB_CONFIG_SCHEMA
 
 logger: ColoredLogger = get_module_logger("utils")
 
@@ -20,17 +22,25 @@ def get_db_connections():
 setattr(Tortoise, "is_connected", False)
 
 
+def validate_credentials(config: dict) -> None:
+    DB_CONFIG_SCHEMA.validate_schema(config)
+
+
 class DBConnectionHandler:
     """Handler responsible for connection and disconnection to database"""
 
     async def __aenter__(self) -> None:
         """Open database connection"""
-        await Tortoise.init(config=get_db_connections())
+
+        config: Dict = get_db_connections()
+
+        await Tortoise.init(config=config)
 
         retry: int = 0
 
         while True:
             try:
+                validate_credentials(DB_CONFIG)
                 await Tortoise.generate_schemas()
                 setattr(Tortoise, "is_connected", True)
                 break
@@ -41,6 +51,8 @@ class DBConnectionHandler:
                 if retry >= 5:
                     raise DBConnectionError(
                         f"Cannot connect to database. Tried {retry} times. Closing..."
+                        f"Check out your credentials in .env file. Actual credentials: "
+                        f"{config['connections']['default']['credentials']}"
                     )
                 pass
 
@@ -84,3 +96,8 @@ def validate_category(link: str) -> str:
     if category not in ("trance", "house", "techno"):
         raise ValueError(f"Category `{category}` is not valid")
     return category
+
+
+def get_folder_name_from_date(date: datetime) -> str:
+    """Get folder name from date"""
+    return f"{date.year}/{date.month}/"

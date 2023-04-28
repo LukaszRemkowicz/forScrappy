@@ -1,4 +1,6 @@
-from typing import List, Optional, Tuple, Type
+from typing import List, Optional, Tuple, Type, TypeVar, Generic
+
+from tortoise import models
 
 from models.entities import LinkModelPydantic, DownloadLinkPydantic
 from models.models import LinkModel, DownloadLinks
@@ -8,10 +10,14 @@ from logger import ColoredLogger, get_module_logger
 logger: ColoredLogger = get_module_logger("db_repo")
 
 
-class BaseRepo:
-    model: Optional[Type[LinkModel | DownloadLinks]] = None
+T = TypeVar("T")
+ModelType = TypeVar("ModelType", bound=models.Model)
 
-    async def filter(self, **kwargs) -> List[Optional[LinkModel | DownloadLinks]]:
+
+class BaseRepo(Generic[ModelType]):
+    model: Optional[Type[ModelType]] = None
+
+    async def filter(self, **kwargs) -> List[Optional[T]]:
         """Filter by given params."""
         if self.model:
             return await self.model.filter(**kwargs)  # type: ignore
@@ -19,10 +25,11 @@ class BaseRepo:
 
     async def create(
         self, obj: DownloadLinkPydantic | LinkModelPydantic
-    ) -> Optional[DownloadLinks | LinkModel]:
+    ) -> Optional[ModelType]:
         """Save LinkModelPydantic instance to database"""
         if self.model:
-            res: DownloadLinks | LinkModel = await self.model.create(**obj.dict())
+            # TODO dodac dodanie pk z LinkModel. Jak to zrobic?
+            res: ModelType = await self.model.create(**obj.dict())
             logger.info(f"Object with id {res.pk} created")
 
             return res
@@ -42,7 +49,7 @@ class BaseRepo:
             await obj.save(**kwargs)
         return None
 
-    async def all(self) -> List[DownloadLinks | LinkModel]:
+    async def all(self) -> List[Optional[T]]:
         """Get all model instances from DB"""
         if self.model:
             return await self.model.all()  # type: ignore
@@ -53,8 +60,15 @@ class BaseRepo:
     ) -> Tuple[LinkModelPydantic | DownloadLinkPydantic, bool]:
         raise NotImplementedError
 
+    @staticmethod
+    async def update_fields(obj: ModelType, **kwargs):
+        for key, value in kwargs.items():
+            setattr(obj, key, value)
+        await obj.save()
+        logger.info(f"Object updated: {obj.pk}")
 
-class LinkRepo(BaseRepo):
+
+class LinkModelRepo(BaseRepo):
     model = LinkModel
 
     async def get_or_create(self, obj) -> Tuple[LinkModelPydantic, bool]:
@@ -73,7 +87,7 @@ class LinkRepo(BaseRepo):
         return return_object, created
 
 
-class DownloadRepo(BaseRepo):
+class DownloadLinksRepo(BaseRepo[DownloadLinks]):
     model = DownloadLinks
 
     async def get_or_create(self, obj: DownloadLinkPydantic) -> Tuple[Optional[DownloadLinkPydantic], bool]:  # type: ignore

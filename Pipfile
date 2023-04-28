@@ -25,6 +25,8 @@ python-dateutil = "*"
 types-requests = "*"
 types-beautifulsoup4 = "*"
 types-python-dateutil = "*"
+jsonschema = "*"
+types-jsonschema= "*"
 
 [dev-packages]
 black = "*"

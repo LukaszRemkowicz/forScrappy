@@ -29,3 +29,11 @@ class TestDBWrongCredentialsError(CustomBaseException):
         "Credentials for test DB are wrong. "
         "Please be sure that you have valid variables in .env file in root directory"
     )
+
+
+class HashNotFoundException(CustomBaseException):
+    pass
+
+
+class LinkPostFailure(CustomBaseException):
+    pass
