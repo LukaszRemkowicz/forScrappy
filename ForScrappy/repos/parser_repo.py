@@ -1,6 +1,7 @@
 import re
+from abc import ABC
 from datetime import datetime
-from typing import List, Optional, Pattern, Dict, TypeVar
+from typing import List, Optional, Pattern, Dict
 
 import requests
 import validators
@@ -37,7 +38,7 @@ class BaseParser:
     async def get_download_link(self, page_link: str) -> Optional[Dict]:
         raise NotImplementedError
 
-    async def parse_date(self, tag_element: List[Tag]) -> Optional[Dict]:
+    async def parse_date(self, tag_element: List[Tag]) -> Optional[datetime]:
         raise NotImplementedError
 
     async def parse_name(self, soup: BeautifulSoup) -> Optional[str]:
@@ -45,6 +46,17 @@ class BaseParser:
 
     async def printify_name(self, name: str) -> str:
         raise NotImplementedError
+
+    @property
+    def printify_regexes(self) -> List[Pattern]:
+        """
+        Regexes responsible for removing unnecessary parts of the song name
+        :return: List of regexes
+        """
+        return [
+            re.compile(r"\.[a-zA-Z\d]{3,4}$"),
+            re.compile(r"\b4clubbers(\.com)?\.pl\b", re.IGNORECASE),
+        ]
 
 
 class ForClubbersParser:
@@ -169,15 +181,18 @@ class ForClubbersParser:
 
 
 class KrakenParser(BaseParser):
-
     async def printify_name(self, name: str) -> str:
-        name: str = name.strip()
-        regex1: Pattern = re.compile(r'\.[a-zA-Z\d]{3,4}$')
-        name = re.sub(regex1, "", name)
-        name = name.strip()
-        regex2: Pattern = re.compile(r'\b4clubbers(\.com)?\.pl\b', re.IGNORECASE)
-        name = re.sub(regex2, "", name)
-        return name.title()
+        new_name: str = name
+        for regex in self.printify_regexes:
+            new_name = re.sub(regex, "", name).strip()
+
+        # name: str = name.strip()
+        # regex1: Pattern = re.compile(r'\.[a-zA-Z\d]{3,4}$')
+        # name = re.sub(regex1, "", name)
+        # name = name.strip()
+        # regex2: Pattern = re.compile(r'\b4clubbers(\.com)?\.pl\b', re.IGNORECASE)
+        # name = re.sub(regex2, "", name)
+        return new_name.title()
 
     async def parse_date(self, tag_elements: List[Tag]) -> Optional[datetime]:
         """
@@ -188,9 +203,12 @@ class KrakenParser(BaseParser):
         for li_tag in tag_elements:
             element_type = li_tag.find("div", {"class": "sub-text"})
 
-            if element_type.text == "Upload date":
-                date = li_tag.find("div", {"class": "lead-text"}).text
-                return datetime.strptime(date, "%d.%m.%Y")
+            if element_type and element_type.text == "Upload date":
+                date = li_tag.find("div", {"class": "lead-text"})
+
+                if date:
+                    date_str: str = date.text
+                    return datetime.strptime(date_str, "%d.%m.%Y")
         return None
 
     async def parse_name(self, soup: BeautifulSoup) -> Optional[str]:
@@ -199,10 +217,21 @@ class KrakenParser(BaseParser):
         :param soup: BeautifulSoup object
         :return: Name
         """
-        regex: Pattern = re.compile('.*file-title.*')
-        name = soup.find("div", {"class": regex}).find("span", {"class": "coin-name"}).text
-        minified = await self.printify_name(name)
-        return minified
+        regex: Pattern = re.compile(".*file-title.*")
+        name_div: Tag | NavigableString | None | int = soup.find(
+            "div", {"class": regex}
+        )
+        if name_div and isinstance(name_div, Tag):
+            name_span: Tag | NavigableString | None | int = name_div.find(
+                "span", {"class": "coin-name"}
+            )
+
+            if name_div and isinstance(name_span, Tag):
+                name_str: str = name_span.text
+                minified: str = await self.printify_name(name_str)
+                return minified
+
+        return None
 
     async def get_download_link(self, page_link: str) -> Optional[Dict]:
         """
@@ -212,8 +241,8 @@ class KrakenParser(BaseParser):
         soup: BeautifulSoup = BeautifulSoup(page_resp.text, "lxml")
 
         # parse token
-        token: str = soup.find("input", id="dl-token")["value"]
-
+        token: str = soup.find("input", id="dl-token")["value"]  # type: ignore
+        breakpoint()
         # attempt to find hash
         hashes: List[str] = [
             item["data-file-hash"]
@@ -224,19 +253,25 @@ class KrakenParser(BaseParser):
 
         dl_hash: str = hashes[0]
 
-        payload: str = f'------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="token"' \
-                       f'\r\n\r\n{token}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--'
+        payload: str = (
+            f'------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="token"'
+            f"\r\n\r\n{token}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--"
+        )
         headers: Dict[str, str] = {
             **self._kraken_headers,
             "hash": dl_hash,
         }
 
         dl_link_resp: Response = self.session.post(
-            f"{settings.kraken_base_url}/download/{dl_hash}", data=payload, headers=headers
+            f"{settings.kraken_base_url}/download/{dl_hash}",
+            data=payload,
+            headers=headers,
         )
 
-        regex: Pattern = re.compile('.*nk-iv-wg4-overview.*')
-        date_li_elements: List[Tag] = soup.find_all("ul", {"class": regex})[0].find_all("li")
+        regex: Pattern = re.compile(".*nk-iv-wg4-overview.*")
+        date_li_elements: List[Tag] = soup.find_all("ul", {"class": regex})[0].find_all(
+            "li"
+        )
 
         date: datetime | None = await self.parse_date(date_li_elements)
         name: str | None = await self.parse_name(soup)
@@ -247,10 +282,10 @@ class KrakenParser(BaseParser):
             )
 
         dl_link_json: dict = dl_link_resp.json()
-        if 'url' in dl_link_json:
+        if "url" in dl_link_json:
             return {
-                'dl_link': dl_link_json['url'],
-                'headers': self._kraken_headers,
+                "dl_link": dl_link_json["url"],
+                "headers": self._kraken_headers,
                 "published_date": date,
                 "name": name,
             }
@@ -260,12 +295,14 @@ class KrakenParser(BaseParser):
             )
 
 
-class ZippyshareParser(BaseParser):
-    def get_download_link(self, page_link: str) -> str:
-        pass
+class ZippyshareParser(BaseParser, ABC):
+    async def get_download_link(self, page_link: str) -> Optional[Dict]:
+        return {page_link: ""}
 
-    def download_file(self, page_link: str, path: str) -> Dict[str, str]:
-        pass
+    @staticmethod
+    async def download_file(page_link: str, path: str) -> Dict[str, str]:
+        return {page_link: path}
 
 
-ParserType = TypeVar("ParserType", KrakenParser, ZippyshareParser)
+# ParserType = TypeVar("ParserType", KrakenParser, ZippyshareParser)
+ParserType = ZippyshareParser | KrakenParser

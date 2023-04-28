@@ -3,15 +3,13 @@ import cgi
 import datetime
 import shutil
 from pathlib import Path
-from typing import Optional, Type, Dict
+from typing import Optional, Dict
 
 from celery import shared_task
 from requests import Session
 
 from models.models import LinkModel, DownloadLinks
 from settings import settings
-from use_case.managers.kraken import ManagerType
-from utils.exceptions import HashNotFoundException, LinkPostFailure
 from utils.utils import DBConnectionHandler
 
 
@@ -42,7 +40,7 @@ def download_file(
     headers: Dict[str, str],
     file_path: Path,
     session: Session = Session(),
-) -> dict:
+) -> Optional[dict]:
     """download file and update object in database"""
 
     path = Path(settings.custom_download_path) / file_path
@@ -59,18 +57,26 @@ def download_file(
         with open(new_file_path, "wb") as f:
             shutil.copyfileobj(r.raw, f)
 
-    async def handle_response() -> dict:
+    async def handle_response() -> Optional[dict]:
+        """Handle DB connection and update object in database"""
 
         async with DBConnectionHandler():
-            obj: Optional[DownloadLinks] = await DownloadLinks.filter(pk=object_id).first()
-            obj.downloaded = True
-            obj.downloaded_date = datetime.datetime.now()
+            obj: Optional[DownloadLinks] = await DownloadLinks.filter(
+                pk=object_id
+            ).first()
 
-            await obj.save()
-            await obj.refresh_from_db()
+            if obj:
+                obj.downloaded = True
+                obj.downloaded_date = datetime.datetime.now()
 
-            response: dict = {"status": "success", "object pk": obj.pk}
-            return response
+                await obj.save()
+                await obj.refresh_from_db()
 
-    result: dict = asyncio.get_event_loop().run_until_complete(handle_response())
+                response: dict = {"status": "success", "object pk": obj.pk}
+                return response
+            return None
+
+    result: Optional[dict] = asyncio.get_event_loop().run_until_complete(
+        handle_response()
+    )
     return result

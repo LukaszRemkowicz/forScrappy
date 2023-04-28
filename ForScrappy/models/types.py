@@ -12,4 +12,4 @@ class SessionObject:
     headers: dict
 
 
-NestedDict = TypeVar('NestedDict', bound=Dict[str, Any])
+NestedDict = TypeVar("NestedDict", bound=Dict[str, Any])

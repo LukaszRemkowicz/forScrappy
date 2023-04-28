@@ -53,11 +53,11 @@ class ForClubbersScrapper:
         return await self.forum_parser.parse_forum(obj=response, category=category)
 
     async def download_file(
-            self,
-            dl_link: str,
-            headers: Dict[str, str],
-            object_id: int,
-            file_path: str,
+        self,
+        dl_link: str,
+        headers: Dict[str, str],
+        object_id: int,
+        file_path: str,
     ) -> None:
         """
         Download file from url as a celery task
@@ -67,12 +67,8 @@ class ForClubbersScrapper:
             :param file_path: path to save file
         return: None
         """
-        download_file.delay(
-            object_id=object_id,
-            dl_link=dl_link,
-            headers=headers,
-            # session=self.session,
-            file_path=file_path
+        download_file.delay(  # type: ignore
+            object_id=object_id, dl_link=dl_link, headers=headers, file_path=file_path
         )
 
     async def parse_download_link(self, url: str, parser: Type[ParserType]):

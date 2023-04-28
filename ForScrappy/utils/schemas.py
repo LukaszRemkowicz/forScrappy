@@ -36,7 +36,7 @@ class DBConfigSchema:
 
     @staticmethod
     def validate_schema(obj: NestedDict):
-        schema = DBConfigSchema.__pydantic_model__.schema()
+        schema = DBConfigSchema.__pydantic_model__.schema()  # type: ignore
         try:
             validate(obj, schema)
         except jsonschema.exceptions.ValidationError as e:

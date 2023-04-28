@@ -1,5 +1,5 @@
 from time import sleep
-from typing import List
+from typing import List, Optional
 
 import typer
 
@@ -65,7 +65,6 @@ async def download_fetched() -> None:
         repo_scrapper=ForClubbersScrapper,
     )
     async with DBConnectionHandler():
-
         res: List[DownloadLinks] = await forum_use_case.get_links()
 
         for link_obj in res:
@@ -83,12 +82,15 @@ async def files_with_errors() -> None:
         repo_scrapper=ForClubbersScrapper,
     )
     async with DBConnectionHandler():
-        res: List[DownloadLinks] = await forum_use_case.get_links_with_errors()
+        res: List[
+            Optional[DownloadLinks]
+        ] = await forum_use_case.get_links_with_errors()
 
         if res:
             logger.info("LinksModelPydantic with errors:")
             for link in res:
-                logger.info(f"{link.link} - {link.error}")
+                if link is not None:
+                    logger.info(f"{link.link} - {link.error}")
         else:
             logger.info("No links with errors found")
 

@@ -2,7 +2,7 @@ import os
 import re
 from pathlib import Path
 
-from pydantic import BaseSettings, SecretStr, Field
+from pydantic import BaseSettings, SecretStr
 
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 PARENT_PATH = os.path.dirname(ROOT_PATH)
@@ -61,7 +61,6 @@ class Settings(BaseSettings):
     @property
     def custom_download_path(self) -> str:
         if ROOT_PATH:
-
             path: Path = Path(ROOT_PATH) / self.download_path
             if not path.exists():
                 path.mkdir()

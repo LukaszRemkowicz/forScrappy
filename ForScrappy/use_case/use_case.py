@@ -3,11 +3,9 @@ from typing import Type, Optional, List, Dict
 from models.entities import DownloadLinksPydantic, LinksModelPydantic
 from models.models import DownloadLinks
 from models.types import SessionObject
-from repos.parser_repo import KrakenParser
+from repos.parser_repo import KrakenParser, ParserType, ZippyshareParser
 from repos.request_repo import ForClubbersScrapper
 from repos.db_repo import LinkModelRepo, DownloadLinksRepo
-from settings import MANAGERS
-from use_case.managers.kraken import Kraken, ManagerType
 from utils.exceptions import LinkPostFailure, HashNotFoundException
 from utils.utils import get_folder_name_from_date
 
@@ -25,61 +23,73 @@ class ForClubUseCase:
         self.scrapper_repo: ForClubbersScrapper = repo_scrapper(session_obj)
 
     @staticmethod
-    async def choose_download_manager(url: str) -> Type[ManagerType]:
-
-        managers = {
+    async def choose_download_manager(url: str) -> Type[ParserType]:
+        managers: Dict[str, Type[ParserType]] = {
             "krakenfiles": KrakenParser,
+            "zippyshare": ZippyshareParser,
         }
 
-        for manager in MANAGERS:
+        for manager in managers:
             if manager in url:
                 try:
-                    res: Type[ManagerType] = managers[manager]
+                    res: Type[ParserType] = managers[manager]
                     return res
                 except KeyError:
-                    raise ValueError(f"Manager not found for {url}")
+                    #  TODO add information to model, that manager is not found. Add new field for manager type
+                    ...
+        raise ValueError(f"Manager not found for {url}")
 
     async def download_file(self, link_obj: DownloadLinks) -> None:
         url: str = link_obj.link
-        manager: Type[ManagerType] = await self.choose_download_manager(url)
+        manager: Type[ParserType] = await self.choose_download_manager(url)
 
         dl_link: str
         headers: Dict[str, str]
 
-        obj: Optional[DownloadLinks] = await DownloadLinks.filter(
+        obj: List[Optional[DownloadLinks]] = await self.download_links_repo.filter(
             link=url
-        ).first()
+        )
+        object_first: DownloadLinks
+        if obj:
+            object_first = obj[0]  # type: ignore
 
         try:
             response: Dict = await self.scrapper_repo.parse_download_link(
                 url=url, parser=manager
             )
-            await self.download_links_repo.update_fields(
-                obj=obj,
-                download_link=url,
-                published_date=response.get("published_date"),
-                name=response.get("name"),
-            )
+            if obj:
+                await self.download_links_repo.update_fields(
+                    obj=object_first,
+                    download_link=url,
+                    published_date=response.get("published_date"),
+                    name=response.get("name"),
+                )
         except (LinkPostFailure, HashNotFoundException) as e:
-            await self.download_links_repo.update_fields(
-                obj=obj,
-                download_link=url,
-                error=True,
-                error_message=f'{obj.error_message}; {str(e)}'
-            )
+            if obj:
+                await self.download_links_repo.update_fields(
+                    obj=object_first,
+                    download_link=url,
+                    error=True,
+                    error_message=f"{object_first.error_message}; {str(e)}",
+                )
             return
 
-        dl_link = response['dl_link']
-        headers = response['headers']
-        file_path = get_folder_name_from_date(response['published_date'])
+        dl_link = response["dl_link"]
+        headers = response["headers"]
+        file_path = get_folder_name_from_date(response["published_date"])
+        if obj:
+            await self.scrapper_repo.download_file(
+                dl_link=dl_link,  # type: ignore
+                headers=headers,
+                file_path=file_path,
+                object_id=obj[0].pk,  # type: ignore
+            )
 
-        await self.scrapper_repo.download_file(
-            dl_link=dl_link, headers=headers, file_path=file_path, object_id=obj.pk
-        )
-
-    async def get_links_with_errors(self) -> List[DownloadLinks]:
+    async def get_links_with_errors(self) -> List[Optional[DownloadLinks]]:
         """Return links with errors"""
-        res: List[DownloadLinks] = await self.download_links_repo.filter(error=True)
+        res: List[Optional[DownloadLinks]] = await self.download_links_repo.filter(
+            error=True
+        )
         return res
 
     async def get_links(self) -> List[DownloadLinks]:
