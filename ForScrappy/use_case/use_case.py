@@ -59,7 +59,7 @@ class ForClubUseCase:
             )
             if obj:
                 await self.download_links_repo.update_fields(
-                    obj=object_first,
+                    obj=object_first,  # TODO sprawdzic
                     download_link=url,
                     published_date=response.get("published_date"),
                     name=response.get("name"),
@@ -94,7 +94,6 @@ class ForClubUseCase:
 
     async def get_links(self) -> List[DownloadLinks]:
         res: List[DownloadLinks] = await self.download_links_repo.filter(downloaded=False)  # type: ignore
-
         return res
 
     async def get_files_link_from_forum(self, category: str, link: str) -> None:

@@ -41,19 +41,19 @@ class ForClubbersScrapper:
     async def get_download_links(
         self, link: str, category: str
     ) -> DownloadLinksPydantic:
-        """Get download links from specific forum thread. Parse them from html response"""
-        response = await self.__fetch_data_get(link)
+        """Get download links from specific forum thread. Parse them from html responses"""
+        response: Response = await self.__fetch_data_get(link)
         return await self.forum_parser.parse_download_links(
             obj=response, url=link, category=category
         )
 
     async def get_forum_urls(self, link: str, category) -> LinksModelPydantic:
-        """Get forum urls from specific forum category. Parse them from html response"""
+        """Get forum urls from specific forum category. Parse them from html responses"""
         response = await self.__fetch_data_get(link)
         return await self.forum_parser.parse_forum(obj=response, category=category)
 
+    @staticmethod
     async def download_file(
-        self,
         dl_link: str,
         headers: Dict[str, str],
         object_id: int,

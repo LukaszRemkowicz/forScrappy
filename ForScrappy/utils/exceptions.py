@@ -37,3 +37,7 @@ class HashNotFoundException(CustomBaseException):
 
 class LinkPostFailure(CustomBaseException):
     pass
+
+
+class LinkModelDoesNotExist(CustomBaseException):
+    custom_message = "Link model does not exist"

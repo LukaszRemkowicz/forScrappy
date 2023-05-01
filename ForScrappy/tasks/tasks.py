@@ -74,7 +74,7 @@ def download_file(
 
                 response: dict = {"status": "success", "object pk": obj.pk}
                 return response
-            return None
+            return {"status": "Error", "object pk": object_id, "model": "DownloadLinks"}
 
     result: Optional[dict] = asyncio.get_event_loop().run_until_complete(
         handle_response()

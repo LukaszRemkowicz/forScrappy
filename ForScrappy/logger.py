@@ -26,7 +26,8 @@ class ColoredFormatter(logging.Formatter):
             "WARNING": self.red + self.message_formatter() + self.reset,
             "ERROR": self.red + self.message_formatter() + self.reset,
             "CRITICAL": self.bold_red + self.message_formatter() + self.reset,
-            "WELCOME_MSG": self.welcome
+            "WELCOME_MSG": self.welcome,
+            "TEST": self.test
             + self.message_formatter().replace("(%(filename)s:%(lineno)d)", "")
             + self.reset,
         }
@@ -41,6 +42,7 @@ class ColoredFormatter(logging.Formatter):
         self.bold_red: str = "\x1b[31;1m"
         self.green: str = "\x1b[38;5;190m"
         self.welcome: str = "\x1b[38;5;222m"
+        self.test: str = "\x1b[38;5;96m"
 
         self.reset: str = "\x1b[0m"
 
@@ -56,6 +58,7 @@ class ColoredLogger(logging.Logger):
     def __init__(self, name: str) -> None:
         super().__init__(name, logging.DEBUG)
         logging.addLevelName(90, "WELCOME_MSG")
+        logging.addLevelName(80, "TEST")
 
         color_formatter: ColoredFormatter = ColoredFormatter()
 
@@ -86,6 +89,11 @@ class ColoredLogger(logging.Logger):
         """Custom logger level"""
 
         self.log(90, msg, *args, **kw)
+
+    def test(self, msg, *args, **kw) -> None:
+        """Custom logger level"""
+
+        self.log(80, msg, *args, **kw)
 
 
 def get_module_logger(mod_name: str) -> ColoredLogger:

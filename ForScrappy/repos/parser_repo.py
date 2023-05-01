@@ -21,7 +21,11 @@ from models.models import LinkModel
 from repos.handlers import LinkModelHandler
 from settings import MANAGERS, settings
 from tasks.tasks import update_thread_name
-from utils.exceptions import HashNotFoundException, LinkPostFailure
+from utils.exceptions import (
+    HashNotFoundException,
+    LinkPostFailure,
+    LinkModelDoesNotExist,
+)
 
 logger: ColoredLogger = get_module_logger("parser")
 
@@ -38,7 +42,8 @@ class BaseParser:
     async def get_download_link(self, page_link: str) -> Optional[Dict]:
         raise NotImplementedError
 
-    async def parse_date(self, tag_element: List[Tag]) -> Optional[datetime]:
+    @staticmethod
+    async def parse_date(tag_element: List[Tag]) -> Optional[datetime]:
         raise NotImplementedError
 
     async def parse_name(self, soup: BeautifulSoup) -> Optional[str]:
@@ -104,14 +109,20 @@ class ForClubbersParser:
         date_parser: ResultSet[Tag] = BeautifulSoup(
             obj.content, features="lxml"
         ).select('td:has(a[name^="post"])')
-
         date_string: str = str(date_parser[0].text)
 
-        for element in ["\n", "\t", "\r", ","]:
+        for element in ["\n", "\t", "\r"]:
             date_string = date_string.replace(element, "")
 
+        new_date: str = date_string
+
+        if "Dzisiaj" in date_string:
+            new_date = date_string.replace(
+                "Dzisiaj", datetime.now().strftime("%d-%m-%Y")
+            )
+
         try:
-            date = datetime.strptime(date_string, "%d-%m-%Y %H:%M")
+            date = datetime.strptime(new_date, "%d-%m-%Y, %H:%M")
             return date
         except (ValueError, ParserError):
             return None
@@ -161,10 +172,9 @@ class ForClubbersParser:
         link_instance: Optional[LinkModel] = await LinkModelHandler.get_obj(
             for_clubbers_url=url
         )
-        if link_instance:
-            link_model: LinkModelPydantic = LinkModelPydantic(**link_instance.__dict__)
-        else:
-            raise
+
+        if not link_instance:
+            raise LinkModelDoesNotExist
 
         result: List[DownloadLinkPydantic] = []
 
@@ -173,7 +183,7 @@ class ForClubbersParser:
                 DownloadLinkPydantic(
                     link=link,
                     category=category,
-                    link_model=link_model,
+                    link_model=link_instance.__dict__,
                 )
             )
 
@@ -182,19 +192,14 @@ class ForClubbersParser:
 
 class KrakenParser(BaseParser):
     async def printify_name(self, name: str) -> str:
+        """Printify name with given regexes list"""
         new_name: str = name
         for regex in self.printify_regexes:
             new_name = re.sub(regex, "", name).strip()
-
-        # name: str = name.strip()
-        # regex1: Pattern = re.compile(r'\.[a-zA-Z\d]{3,4}$')
-        # name = re.sub(regex1, "", name)
-        # name = name.strip()
-        # regex2: Pattern = re.compile(r'\b4clubbers(\.com)?\.pl\b', re.IGNORECASE)
-        # name = re.sub(regex2, "", name)
         return new_name.title()
 
-    async def parse_date(self, tag_elements: List[Tag]) -> Optional[datetime]:
+    @staticmethod
+    async def parse_date(tag_elements: List[Tag]) -> Optional[datetime]:
         """
         Parse date from given tag elements
         :param tag_elements: List of tag elements
@@ -242,7 +247,7 @@ class KrakenParser(BaseParser):
 
         # parse token
         token: str = soup.find("input", id="dl-token")["value"]  # type: ignore
-        breakpoint()
+
         # attempt to find hash
         hashes: List[str] = [
             item["data-file-hash"]
@@ -305,4 +310,6 @@ class ZippyshareParser(BaseParser, ABC):
 
 
 # ParserType = TypeVar("ParserType", KrakenParser, ZippyshareParser)
-ParserType = ZippyshareParser | KrakenParser
+ParserType = KrakenParser | ZippyshareParser
+
+# ParserType = Union[Type[KrakenParser], Type[ZippyshareParser]]

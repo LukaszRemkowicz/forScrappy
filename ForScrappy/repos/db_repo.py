@@ -4,60 +4,38 @@ from tortoise import models
 
 from models.entities import LinkModelPydantic, DownloadLinkPydantic
 from models.models import LinkModel, DownloadLinks
-
 from logger import ColoredLogger, get_module_logger
 
 logger: ColoredLogger = get_module_logger("db_repo")
 
 
-T = TypeVar("T")
 ModelType = TypeVar("ModelType", bound=models.Model)
+PydanticTypeVar = TypeVar("PydanticTypeVar", DownloadLinkPydantic, LinkModelPydantic)
 
 
 class BaseRepo(Generic[ModelType]):
-    model: Optional[Type[ModelType]] = None
+    model: Type[ModelType]
 
-    async def filter(self, **kwargs) -> List[Optional[T]]:
+    async def filter(self, **kwargs) -> List[Optional[ModelType]]:
         """Filter by given params."""
-        if self.model:
-            return await self.model.filter(**kwargs)  # type: ignore
-        return list()
+        return await self.model.filter(**kwargs)  # type: ignore
 
-    async def create(
-        self, obj: DownloadLinkPydantic | LinkModelPydantic
-    ) -> Optional[ModelType]:
+    async def create(self, obj: PydanticTypeVar) -> Optional[ModelType]:
         """Save LinkModelPydantic instance to database"""
-        if self.model:
-            # TODO dodac dodanie pk z LinkModel. Jak to zrobic?
-            res: ModelType = await self.model.create(**obj.dict())
-            logger.info(f"Object with id {res.pk} created")
+        res: ModelType = await self.model.create(**obj.dict())
+        logger.info(f"Object {self.model.__name__} with id {res.pk} created")
 
-            return res
-        return None
+        return res
 
-    # async def save(self, **kwargs) -> Optional[LinkModel | DownloadLinks]:
-    #     """Save LinkModelPydantic instance to database"""
-    #     if self.model:
-    #         res: DownloadLinks | LinkModel = await self.model.create(**kwargs)
-    #         logger.info(f"Object with id {res.pk} created")
-    #         return res
-    #     return None
+    async def save(self, **kwargs) -> None:
+        obj: ModelType = self.model(**kwargs)
+        await obj.save(**kwargs)
 
-    async def save(self, **kwargs):
-        if self.model:
-            obj = self.model(**kwargs)
-            await obj.save(**kwargs)
-        return None
-
-    async def all(self) -> List[Optional[T]]:
+    async def all(self) -> List[Optional[ModelType]]:
         """Get all model instances from DB"""
-        if self.model:
-            return await self.model.all()  # type: ignore
-        return list()
+        return await self.model.all()  # type: ignore
 
-    async def get_or_create(
-        self, obj: DownloadLinkPydantic | LinkModelPydantic
-    ) -> Tuple[LinkModelPydantic | DownloadLinkPydantic, bool]:
+    async def get_or_create(self, obj: PydanticTypeVar) -> Tuple[PydanticTypeVar, bool]:
         raise NotImplementedError
 
     @staticmethod
@@ -68,11 +46,13 @@ class BaseRepo(Generic[ModelType]):
         logger.info(f"Object updated: {obj.pk}")
 
 
-class LinkModelRepo(BaseRepo):
+class LinkModelRepo(BaseRepo[LinkModel]):
     model = LinkModel
 
-    async def get_or_create(self, obj) -> Tuple[LinkModelPydantic, bool]:
-        exists = await self.filter(for_clubbers_url=obj.for_clubbers_url)
+    async def get_or_create(self, obj: LinkModelPydantic) -> Tuple[LinkModelPydantic, bool]:  # type: ignore
+        exists: List[Optional[LinkModel]] = await self.filter(
+            for_clubbers_url=obj.for_clubbers_url
+        )
         created: bool
         return_object: LinkModelPydantic
 
@@ -88,7 +68,8 @@ class LinkModelRepo(BaseRepo):
 
 
 class DownloadLinksRepo(BaseRepo[DownloadLinks]):
-    model = DownloadLinks
+    model: Type[DownloadLinks] = DownloadLinks
+    link_model: Type[LinkModel] = LinkModel
 
     async def get_or_create(self, obj: DownloadLinkPydantic) -> Tuple[Optional[DownloadLinkPydantic], bool]:  # type: ignore
         exists = await self.filter(link=obj.link)
@@ -106,10 +87,15 @@ class DownloadLinksRepo(BaseRepo[DownloadLinks]):
                 return_object = DownloadLinkPydantic(**instance_dict)
                 created = False
         else:
-            link_model_data = obj.dict().pop("link_model")
-            link_model, _ = await LinkModel.get_or_create(**link_model_data)
+            link_model: Optional[LinkModel] = await self.link_model.filter(
+                for_clubbers_url=obj.link_model.for_clubbers_url
+            ).first()
+
+            if not link_model:
+                raise ValueError("LinkModel with given url doesn't exist")
+
             obj.link_model = LinkModelPydantic(**link_model.__dict__)
-            object_created = await self.create(obj)
+            object_created: DownloadLinks = await self.create(obj)
 
             if object_created:
                 object_dict = await object_created.to_dict()
@@ -118,3 +104,16 @@ class DownloadLinksRepo(BaseRepo[DownloadLinks]):
                 created = True
 
         return return_object, created
+
+    async def create(self, obj: DownloadLinkPydantic) -> DownloadLinks:  # type: ignore
+        """Override create method to create link_model if it doesn't exist."""
+        link_model: LinkModel
+        link_model, _ = await self.link_model.get_or_create(**obj.link_model.dict())
+
+        new_object_data: dict = {**obj.dict(), "link_model": link_model}
+        # obj.link_model = link_model
+        # res: ModelType = await self.model.create(**obj.dict())
+        res: DownloadLinks = await self.model.create(**new_object_data)
+        logger.info(f"Object {self.model.__name__} with id {res.pk} created")
+
+        return res
