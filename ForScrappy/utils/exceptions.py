@@ -37,3 +37,19 @@ class HashNotFoundException(CustomBaseException):
 
 class LinkPostFailure(CustomBaseException):
     pass
+
+
+class LinkModelDoesNotExist(CustomBaseException):
+    custom_message = "Link model does not exist"
+
+
+class DownloadLinkPydanticException(CustomBaseException):
+    custom_message = "Object is not valid DownloadLinkPydantic instance"
+
+
+class TokenNotFoundException(CustomBaseException):
+    custom_message = "Token not found"
+
+
+class TokenIsNotStrException(CustomBaseException):
+    custom_message = "Token is not a valid string"

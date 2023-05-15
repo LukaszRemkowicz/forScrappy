@@ -70,7 +70,7 @@ class Settings(BaseSettings):
             return self.download_path
 
 
-settings = Settings()
+settings: Settings = Settings()
 
 if os.environ.get("ENVIRONMENT") == "local":
     pattern = r"(?<=redis://)[^:]+(?=:)"

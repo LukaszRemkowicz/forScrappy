@@ -1,7 +1,11 @@
-from typing import Type, Optional, List, Dict
+from typing import Type, Optional, Dict
 
-from models.entities import DownloadLinksPydantic, LinksModelPydantic
-from models.models import DownloadLinks
+from models.entities import (
+    DownloadLinksPydantic,
+    LinksModelPydantic,
+    DownloadLinkPydantic,
+    LinkModelPydantic,
+)
 from models.types import SessionObject
 from repos.parser_repo import KrakenParser, ParserType, ZippyshareParser
 from repos.request_repo import ForClubbersScrapper
@@ -39,62 +43,66 @@ class ForClubUseCase:
                     ...
         raise ValueError(f"Manager not found for {url}")
 
-    async def download_file(self, link_obj: DownloadLinks) -> None:
+    async def download_file(self, link_obj: DownloadLinkPydantic) -> None:
+        """
+        Download file from link. This method as an argument takes existing
+        DownloadLinks object, that's why there is no need to check if object is in db
+        :param link_obj: DownloadLinkPydantic: pydantic representation of DownloadLinks model
+        :return: None : This method ends with saving file to disk as a celery task
+        """
+
         url: str = link_obj.link
-        manager: Type[ParserType] = await self.choose_download_manager(url)
+        parser: Type[ParserType] = await self.choose_download_manager(url)
 
         dl_link: str
         headers: Dict[str, str]
 
-        obj: List[Optional[DownloadLinks]] = await self.download_links_repo.filter(
-            link=url
-        )
-        object_first: DownloadLinks
-        if obj:
-            object_first = obj[0]  # type: ignore
-
         try:
             response: Dict = await self.scrapper_repo.parse_download_link(
-                url=url, parser=manager
+                url=url, parser=parser
             )
-            if obj:
-                await self.download_links_repo.update_fields(
-                    obj=object_first,
-                    download_link=url,
-                    published_date=response.get("published_date"),
-                    name=response.get("name"),
-                )
+            await self.download_links_repo.update_fields(
+                obj=link_obj,
+                download_link=url,
+                published_date=response.get("published_date"),
+                name=response.get("name"),
+            )
         except (LinkPostFailure, HashNotFoundException) as e:
-            if obj:
-                await self.download_links_repo.update_fields(
-                    obj=object_first,
-                    download_link=url,
-                    error=True,
-                    error_message=f"{object_first.error_message}; {str(e)}",
-                )
+            await self.download_links_repo.update_fields(
+                obj=link_obj,
+                download_link=url,
+                error=True,
+                error_message=f"{link_obj.error_message}; {str(e)}",
+            )
             return
 
         dl_link = response["dl_link"]
         headers = response["headers"]
         file_path = get_folder_name_from_date(response["published_date"])
-        if obj:
-            await self.scrapper_repo.download_file(
-                dl_link=dl_link,  # type: ignore
-                headers=headers,
-                file_path=file_path,
-                object_id=obj[0].pk,  # type: ignore
-            )
 
-    async def get_links_with_errors(self) -> List[Optional[DownloadLinks]]:
+        await self.scrapper_repo.download_file(
+            dl_link=dl_link,
+            headers=headers,
+            file_path=file_path,
+            object_id=link_obj.pk,
+        )
+
+    async def get_links_with_errors(self) -> Optional[DownloadLinksPydantic]:
         """Return links with errors"""
-        res: List[Optional[DownloadLinks]] = await self.download_links_repo.filter(
+        res: Optional[DownloadLinksPydantic] = await self.download_links_repo.filter(  # type: ignore
             error=True
         )
+        if not res or not res.__root__:
+            return None
         return res
 
-    async def get_links(self) -> List[DownloadLinks]:
-        res: List[DownloadLinks] = await self.download_links_repo.filter(downloaded=False)  # type: ignore
-
+    async def get_links(self) -> Optional[DownloadLinksPydantic]:
+        """Return links from DB which are not downloaded yet"""
+        res: Optional[DownloadLinksPydantic] = await self.download_links_repo.filter(  # type: ignore
+            downloaded=False
+        )
+        if not res or not res.__root__:
+            return None
         return res
 
     async def get_files_link_from_forum(self, category: str, link: str) -> None:
@@ -106,6 +114,8 @@ class ForClubUseCase:
 
         for element in forum_links.__root__:
             obj, _ = await self.link_model_repo.get_or_create(element)
+
+            assert isinstance(obj, LinkModelPydantic)
 
             download_links: DownloadLinksPydantic = (
                 await self.scrapper_repo.get_download_links(
