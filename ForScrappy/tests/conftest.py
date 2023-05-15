@@ -307,6 +307,8 @@ def mock_download_file_task(mocker: "MockerFixture") -> MagicMock:
     parse_header_mock.return_value = ("attachment", {"filename": "file.zip"})
 
     mocker.patch("builtins.open", mocker.MagicMock())
+    mocker.patch("pathlib.Path.mkdir", mocker.MagicMock())
+
     session_mock.get.return_value = response_mock
 
     return session_mock
