@@ -8,16 +8,18 @@ class BaseModel(Model):
         for field_name, field in self._meta.fields_map.items():
             if isinstance(field, ForeignKeyFieldInstance):
                 related_instance_id = getattr(self, f"{field_name}_id")
-                related_instance = await field.related_model.get(id=related_instance_id)
+                related_instance = await field.related_model.filter(
+                    id=related_instance_id
+                ).first()
                 related_dict = await related_instance.to_dict()
                 res[field_name] = related_dict
             else:
                 res[field_name] = getattr(self, field_name)
-        return res
+        return {**res, "pk": res.get("id")}
 
 
 class LinkModel(BaseModel):
-    name = fields.CharField(max_length=100, null=True, description="Song name")
+    name = fields.CharField(max_length=100, null=True, description="Topic name")
     for_clubbers_url = fields.CharField(
         max_length=2000, null=True, unique=True, description="Forum url"
     )
@@ -36,6 +38,10 @@ class LinkModel(BaseModel):
 
     def __str__(self):
         return f"{self.for_clubbers_url}"
+
+    @property
+    def __dict__(self):
+        return {**super().__dict__, "pk": self.pk}
 
 
 class DownloadLinks(BaseModel):
@@ -60,7 +66,7 @@ class DownloadLinks(BaseModel):
     downloaded = fields.BooleanField(
         default=False, description="State saying if file is download or not"
     )
-    downloaded_date = fields.DateField(
+    downloaded_date = fields.DatetimeField(
         null=True, blank=True, description="Downloaded date"
     )
     error = fields.BooleanField(
@@ -75,8 +81,8 @@ class DownloadLinks(BaseModel):
     not_exists = fields.BooleanField(
         default="False", description="if file not exists on server, set to True"
     )
-    published_date = fields.DateField(
-        max_length=100, null=True, blank=True, description="Published on server date"
+    published_date = fields.DatetimeField(
+        null=True, blank=True, description="Published on server date"
     )
     category = fields.CharField(
         max_length=20, null=True, blank=True, description="Category: trance or house"
@@ -93,3 +99,7 @@ class DownloadLinks(BaseModel):
     class Meta:
         table = "download_links"
         abstract = False
+
+    @property
+    def __dict__(self):
+        return {**super().__dict__, "pk": self.pk}

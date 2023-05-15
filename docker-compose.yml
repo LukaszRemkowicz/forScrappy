@@ -79,6 +79,7 @@ services:
       - ./ForScrappy:/4clubbers/ForScrappy
       - postgres:/vol/postgres
     environment:
+      - TZ=Europe/Warsaw
       - DB_HOST=${DB__HOST}
       - DB_NAME=${DB__NAME}
       - DB_USER=${DB__USERNAME}
@@ -107,12 +108,17 @@ services:
     ports:
       - "5555:5555"
     environment:
+      - CELERY_TIMEZONE=Europe/Warsaw
+      - TZ=Europe/Warsaw
       - CELERY_BROKER_URL=${CELERY__BROKER_URL}
       - CELERY_RESULT_BACKEND=${CELERY__RESULT_BACKEND}
     depends_on:
       - forscrappy
       - redis
       - celery
+    volumes:
+      - ./ForScrappy:/4clubbers/ForScrappy
+      - postgres:/vol/postgres
     networks:
       services-network:
         aliases:

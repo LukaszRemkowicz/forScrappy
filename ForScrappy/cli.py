@@ -1,20 +1,21 @@
+from logging import Logger
 from time import sleep
-from typing import List
+from typing import List, Optional
 
 import typer
 
-from models.models import DownloadLinks
+from models.entities import DownloadLinksPydantic
 from models.types import SessionObject
-from repos.api_repo import ForClubbersScrapper
-from repos.db_repo import LinkRepo, DownloadRepo
+from repos.request_repo import ForClubbersScrapper
+from repos.db_repo import LinkModelRepo, DownloadLinksRepo
 from use_case.use_case import ForClubUseCase
 from utils.decorators import be_async
 from utils.login import User
 from utils.utils import DBConnectionHandler, LinkValidator, validate_category
 
-from logger import ColoredLogger, get_module_logger
+from logger import get_module_logger
 
-logger: ColoredLogger = get_module_logger("db_repo")
+logger: Logger = get_module_logger("db_repo")
 
 
 app = typer.Typer()
@@ -35,8 +36,8 @@ async def get_forum_links(
         session_obj: SessionObject = User.login()
         sleep(3)
         forum_use_case: ForClubUseCase = ForClubUseCase(
-            link_repo=LinkRepo,
-            download_repo=DownloadRepo,
+            link_repo=LinkModelRepo,
+            download_repo=DownloadLinksRepo,
             repo_scrapper=ForClubbersScrapper,
             session_obj=session_obj,
         )
@@ -60,16 +61,41 @@ async def get_forum_links(
 @be_async
 async def download_fetched() -> None:
     forum_use_case: ForClubUseCase = ForClubUseCase(
-        link_repo=LinkRepo,
-        download_repo=DownloadRepo,
+        link_repo=LinkModelRepo,
+        download_repo=DownloadLinksRepo,
         repo_scrapper=ForClubbersScrapper,
     )
+    async with DBConnectionHandler():
+        res: Optional[DownloadLinksPydantic] = await forum_use_case.get_links()
+        if res and res.__root__:
+            for link_obj in res.__root__:
+                await forum_use_case.download_file(link_obj=link_obj)
 
-    res: List[DownloadLinks] = await forum_use_case.get_links()
+    logger.info("Command download-fetched with success")
 
-    for link in res:
-        await forum_use_case.download_file(link=link)
+
+@app.command(help="Get links with errors. Make sure celery tasks are completed")
+@be_async
+async def files_with_errors() -> None:
+    forum_use_case: ForClubUseCase = ForClubUseCase(
+        link_repo=LinkModelRepo,
+        download_repo=DownloadLinksRepo,
+        repo_scrapper=ForClubbersScrapper,
+    )
+    async with DBConnectionHandler():
+        res: Optional[
+            DownloadLinksPydantic
+        ] = await forum_use_case.get_links_with_errors()
+
+        if res:
+            logger.info("LinksModelPydantic with errors:")
+            for link in res.__root__:
+                if link is not None:
+                    logger.info(f"{link.link} - {link.error}")
+        else:
+            logger.info("No links with errors found")
 
 
 if __name__ == "__main__":
+    # os.environ['PYTHONASYNCIODEBUG'] = '1'
     app()

@@ -29,3 +29,27 @@ class TestDBWrongCredentialsError(CustomBaseException):
         "Credentials for test DB are wrong. "
         "Please be sure that you have valid variables in .env file in root directory"
     )
+
+
+class HashNotFoundException(CustomBaseException):
+    pass
+
+
+class LinkPostFailure(CustomBaseException):
+    pass
+
+
+class LinkModelDoesNotExist(CustomBaseException):
+    custom_message = "Link model does not exist"
+
+
+class DownloadLinkPydanticException(CustomBaseException):
+    custom_message = "Object is not valid DownloadLinkPydantic instance"
+
+
+class TokenNotFoundException(CustomBaseException):
+    custom_message = "Token not found"
+
+
+class TokenIsNotStrException(CustomBaseException):
+    custom_message = "Token is not a valid string"
