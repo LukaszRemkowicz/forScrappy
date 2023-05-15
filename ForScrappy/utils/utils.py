@@ -1,25 +1,28 @@
 import re
 from datetime import datetime
+from logging import Logger
 from time import sleep
 from typing import Dict
 
 from asyncpg import CannotConnectNowError
-from tortoise import Tortoise
+
+# from tortoise import Tortoise
 import validators
 
-from logger import ColoredLogger, get_module_logger
+from logger import get_module_logger
+from models.types import MyTortoise
 from settings import DB_CONFIG, settings
 from utils.exceptions import DBConnectionError, URLNotValidFormat
 from utils.schemas import DB_CONFIG_SCHEMA
 
-logger: ColoredLogger = get_module_logger("utils")
+logger: Logger = get_module_logger("utils")
 
 
 def get_db_connections():
     return DB_CONFIG
 
 
-setattr(Tortoise, "is_connected", False)
+# setattr(Tortoise, "is_connected", False)
 
 
 def validate_credentials(config: dict) -> None:
@@ -34,15 +37,16 @@ class DBConnectionHandler:
 
         config: Dict = get_db_connections()
 
-        await Tortoise.init(config=config)
+        await MyTortoise.init(config=config)
 
         retry: int = 0
 
         while True:
             try:
                 validate_credentials(DB_CONFIG)
-                await Tortoise.generate_schemas()
-                setattr(Tortoise, "is_connected", True)
+                await MyTortoise.generate_schemas()
+                # setattr(Tortoise, "is_connected", True)
+                MyTortoise.is_connected = True
                 break
             except (ConnectionError, CannotConnectNowError):
                 retry += 1
@@ -58,8 +62,10 @@ class DBConnectionHandler:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Close database connection"""
-        await Tortoise.close_connections()
-        setattr(Tortoise, "is_connected", False)
+        # await Tortoise.close_connections()
+        # setattr(Tortoise, "is_connected", False)
+        await MyTortoise.close_connections()
+        MyTortoise.is_connected = False
 
 
 class LinkValidator:

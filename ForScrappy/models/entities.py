@@ -8,6 +8,7 @@ from utils.consts import USER_AGENTS
 
 
 class LinkModelPydantic(BaseModel):
+    pk: Optional[int] = None
     name: Optional[str] = None
     for_clubbers_url: str
     error: bool = False
@@ -19,6 +20,7 @@ class LinksModelPydantic(BaseModel):
 
 
 class DownloadLinkPydantic(BaseModel):
+    pk: Optional[int] = None
     name: Optional[str] = None
     link: str
     link_model: LinkModelPydantic

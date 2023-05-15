@@ -1,20 +1,25 @@
-import asyncio
 import logging
 import os
 import warnings
 from typing import Optional, List, Union
+from unittest.mock import MagicMock
 
 import pytest
 import requests
 from bs4 import Tag, BeautifulSoup, NavigableString
 from pytest_docker.plugin import Services
 from pytest_mock import MockerFixture
-from tortoise import Tortoise, run_async
+
+from tortoise import run_async
 from dotenv import load_dotenv
 
 from models.entities import LinkModelPydantic, DownloadLinkPydantic
-from repos.db_repo import LinkModelRepo
+from models.types import MyTortoise
+from repos.db_repo import LinkModelRepo, DownloadLinksRepo
+from repos.request_repo import ForClubbersScrapper
 from settings import ROOT_PATH, DB_CONFIG, settings, PARENT_PATH
+from tasks.celery import app
+from use_case.use_case import ForClubUseCase
 from utils.exceptions import TestDBWrongCredentialsError
 from utils.utils import DBConnectionHandler
 
@@ -27,6 +32,7 @@ root_dir: str = ROOT_PATH
 def pytest_configure(config):
     logging.getLogger("db_repo").setLevel(logging.CRITICAL)
     logging.getLogger("parser").setLevel(logging.CRITICAL),
+    logging.getLogger("request_repo").setLevel(logging.CRITICAL),
     os.environ["TEST"] = "True"
 
 
@@ -134,13 +140,6 @@ async def download_link_model() -> DownloadLinkPydantic:
     )
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest.fixture(scope="function", autouse=True)
 def clean_database() -> None:
     """Clean database before each test"""
@@ -148,10 +147,10 @@ def clean_database() -> None:
     async def _clean_database() -> None:
         async with DBConnectionHandler():
             query = 'DELETE FROM "4clubbers_links"'
-            await Tortoise.get_connection("default").execute_query(query)
+            await MyTortoise.get_connection("default").execute_query(query)
 
             query = "DELETE FROM download_links"
-            await Tortoise.get_connection("default").execute_query(query)
+            await MyTortoise.get_connection("default").execute_query(query)
 
     run_async(_clean_database())
 
@@ -160,7 +159,7 @@ def response(string: str) -> requests.Response:
     """Create Response object from given string"""
 
     mock_response: requests.Response = requests.models.Response()
-    mock_response._content = string.encode("iso-8859-2")  # type: ignore
+    mock_response._content = string.encode("iso-8859-2")
     mock_response._text = string  # type: ignore
     mock_response.status_code = 200
     res: requests.Response = requests.Response()
@@ -283,3 +282,40 @@ def get_list_of_tags() -> List[Tag]:
     for element in html_tags:
         tags.append(create_tag_element(element))
     return tags
+
+
+@pytest.fixture(scope="module")
+def celery_app():
+    app.conf.update(CELERY_ALWAYS_EAGER=True)
+    return app
+
+
+@pytest.fixture
+def mock_download_file_task(mocker: "MockerFixture") -> MagicMock:
+    """Mock download_file task properties like cgi, Session or shutil"""
+    session_mock = mocker.MagicMock()
+    mocker.patch("requests.Session", return_value=session_mock)
+    mocker.patch(
+        "shutil.copyfileobj", autospec=True, side_effect=lambda fsrc, fdst: None
+    )
+
+    response_mock = mocker.MagicMock()
+    response_mock.headers = {"content-disposition": 'attachment; filename="file.zip"'}
+    response_mock.raw = mocker.MagicMock()
+
+    parse_header_mock = mocker.patch("cgi.parse_header", autospec=True)
+    parse_header_mock.return_value = ("attachment", {"filename": "file.zip"})
+
+    mocker.patch("builtins.open", mocker.MagicMock())
+    session_mock.get.return_value = response_mock
+
+    return session_mock
+
+
+@pytest.fixture
+def use_case() -> ForClubUseCase:
+    return ForClubUseCase(
+        link_repo=LinkModelRepo,
+        download_repo=DownloadLinksRepo,
+        repo_scrapper=ForClubbersScrapper,
+    )

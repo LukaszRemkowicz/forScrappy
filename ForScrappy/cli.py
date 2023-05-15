@@ -1,9 +1,10 @@
+from logging import Logger
 from time import sleep
 from typing import List, Optional
 
 import typer
 
-from models.models import DownloadLinks
+from models.entities import DownloadLinksPydantic
 from models.types import SessionObject
 from repos.request_repo import ForClubbersScrapper
 from repos.db_repo import LinkModelRepo, DownloadLinksRepo
@@ -12,9 +13,9 @@ from utils.decorators import be_async
 from utils.login import User
 from utils.utils import DBConnectionHandler, LinkValidator, validate_category
 
-from logger import ColoredLogger, get_module_logger
+from logger import get_module_logger
 
-logger: ColoredLogger = get_module_logger("db_repo")
+logger: Logger = get_module_logger("db_repo")
 
 
 app = typer.Typer()
@@ -65,10 +66,10 @@ async def download_fetched() -> None:
         repo_scrapper=ForClubbersScrapper,
     )
     async with DBConnectionHandler():
-        res: List[DownloadLinks] = await forum_use_case.get_links()
-
-        for link_obj in res:
-            await forum_use_case.download_file(link_obj=link_obj)
+        res: Optional[DownloadLinksPydantic] = await forum_use_case.get_links()
+        if res and res.__root__:
+            for link_obj in res.__root__:
+                await forum_use_case.download_file(link_obj=link_obj)
 
     logger.info("Command download-fetched with success")
 
@@ -82,13 +83,13 @@ async def files_with_errors() -> None:
         repo_scrapper=ForClubbersScrapper,
     )
     async with DBConnectionHandler():
-        res: List[
-            Optional[DownloadLinks]
+        res: Optional[
+            DownloadLinksPydantic
         ] = await forum_use_case.get_links_with_errors()
 
         if res:
             logger.info("LinksModelPydantic with errors:")
-            for link in res:
+            for link in res.__root__:
                 if link is not None:
                     logger.info(f"{link.link} - {link.error}")
         else:
@@ -96,4 +97,5 @@ async def files_with_errors() -> None:
 
 
 if __name__ == "__main__":
+    # os.environ['PYTHONASYNCIODEBUG'] = '1'
     app()

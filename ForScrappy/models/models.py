@@ -8,12 +8,14 @@ class BaseModel(Model):
         for field_name, field in self._meta.fields_map.items():
             if isinstance(field, ForeignKeyFieldInstance):
                 related_instance_id = getattr(self, f"{field_name}_id")
-                related_instance = await field.related_model.get(id=related_instance_id)
+                related_instance = await field.related_model.filter(
+                    id=related_instance_id
+                ).first()
                 related_dict = await related_instance.to_dict()
                 res[field_name] = related_dict
             else:
                 res[field_name] = getattr(self, field_name)
-        return res
+        return {**res, "pk": res.get("id")}
 
 
 class LinkModel(BaseModel):
@@ -36,6 +38,10 @@ class LinkModel(BaseModel):
 
     def __str__(self):
         return f"{self.for_clubbers_url}"
+
+    @property
+    def __dict__(self):
+        return {**super().__dict__, "pk": self.pk}
 
 
 class DownloadLinks(BaseModel):
@@ -93,3 +99,7 @@ class DownloadLinks(BaseModel):
     class Meta:
         table = "download_links"
         abstract = False
+
+    @property
+    def __dict__(self):
+        return {**super().__dict__, "pk": self.pk}

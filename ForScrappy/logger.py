@@ -96,13 +96,13 @@ class ColoredLogger(logging.Logger):
         self.log(80, msg, *args, **kw)
 
 
-def get_module_logger(mod_name: str) -> ColoredLogger:
+def get_module_logger(mod_name: str) -> logging.Logger:
     """
     returns logger. Example usage:
     logger = get_module_logger('name')
     """
     logging.setLoggerClass(ColoredLogger)
-    return logging.getLogger(mod_name)  # type: ignore
+    return logging.getLogger(mod_name)
 
 
 # get_module_logger("TESTING_LOGGER").welcome_msg("Welcome")

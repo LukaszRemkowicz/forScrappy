@@ -1,6 +1,7 @@
 import re
 from abc import ABC
 from datetime import datetime
+from logging import Logger
 from typing import List, Optional, Pattern, Dict
 
 import requests
@@ -10,7 +11,7 @@ from bs4.element import ResultSet
 from dateutil.parser import ParserError
 from requests import Response
 
-from logger import ColoredLogger, get_module_logger
+from logger import get_module_logger
 from models.entities import (
     LinkModelPydantic,
     DownloadLinkPydantic,
@@ -25,9 +26,11 @@ from utils.exceptions import (
     HashNotFoundException,
     LinkPostFailure,
     LinkModelDoesNotExist,
+    TokenNotFoundException,
+    TokenIsNotStrException,
 )
 
-logger: ColoredLogger = get_module_logger("parser")
+logger: Logger = get_module_logger("parser")
 
 
 class BaseParser:
@@ -238,15 +241,26 @@ class KrakenParser(BaseParser):
 
         return None
 
-    async def get_download_link(self, page_link: str) -> Optional[Dict]:
+    async def get_download_link(self, page_link: str) -> dict:
         """
-        Return dictionary link with dl_link and headers.
+        Return dictionary link with dl_link and headers
+        :param page_link: str
+        :return: dict
         """
         page_resp: Response = self.session.get(page_link)
         soup: BeautifulSoup = BeautifulSoup(page_resp.text, "lxml")
 
         # parse token
-        token: str = soup.find("input", id="dl-token")["value"]  # type: ignore
+        token_tag: Tag | None = soup.find("input", id="dl-token")  # type: ignore
+
+        if not token_tag:
+            raise TokenNotFoundException()
+
+        token: str
+        if isinstance(token_tag.get("value"), str):
+            token = token_tag.get("value")  # type: ignore
+        else:
+            raise TokenIsNotStrException()
 
         # attempt to find hash
         hashes: List[str] = [
@@ -287,17 +301,17 @@ class KrakenParser(BaseParser):
             )
 
         dl_link_json: dict = dl_link_resp.json()
-        if "url" in dl_link_json:
-            return {
-                "dl_link": dl_link_json["url"],
-                "headers": self._kraken_headers,
-                "published_date": date,
-                "name": name,
-            }
-        else:
+
+        if "url" not in dl_link_json:
             raise LinkPostFailure(
                 f"Failed to acquire download URL from kraken for page_link: {page_link}"
             )
+        return {
+            "dl_link": dl_link_json["url"],
+            "headers": self._kraken_headers,
+            "published_date": date,
+            "name": name,
+        }
 
 
 class ZippyshareParser(BaseParser, ABC):
