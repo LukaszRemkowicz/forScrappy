@@ -1,7 +1,6 @@
 import hashlib
 
 import requests
-
 from models.entities import RequestHeaders
 from models.types import SessionObject
 from settings import settings

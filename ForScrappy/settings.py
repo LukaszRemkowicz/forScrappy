@@ -43,6 +43,30 @@ class TestDatabaseSettings(BaseSettings):
     name: str
 
 
+class EmailSettings(BaseSettings):
+    """Email settings"""
+
+    host: str
+    port: int
+    username: str
+    password: SecretStr
+    use_tls: bool = True
+    from_: str
+    to_: str
+
+
+class NginxSettings(BaseSettings):
+    """Nginx settings"""
+
+    base_url: str
+
+
+class SentrySettings(BaseSettings):
+    """Sentry settings"""
+
+    dsn: str
+
+
 class Settings(BaseSettings):
     """General settings for application"""
 
@@ -52,6 +76,10 @@ class Settings(BaseSettings):
     test_db: TestDatabaseSettings
     download_path: str
     kraken_base_url: str
+    email: EmailSettings
+    nginx: NginxSettings
+    sentry: SentrySettings
+    environment: str = "local"
 
     class Config:
         env_file = os.path.join(PARENT_PATH, ".env")

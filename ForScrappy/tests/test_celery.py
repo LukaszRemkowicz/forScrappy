@@ -1,17 +1,12 @@
 from pathlib import Path
-from typing import Dict, Awaitable, Optional
+from typing import Awaitable, Dict, Optional
 from unittest.mock import MagicMock
 
 import pytest
 from celery import Celery
-
-from models.entities import (
-    DownloadLinkPydantic,
-    LinkModelPydantic,
-)
-
-from repos.db_repo import LinkModelRepo, DownloadLinksRepo
-from tasks.tasks import update_thread_name_task, download_file_task
+from models.entities import DownloadLinkPydantic, LinkModelPydantic
+from repos.db_repo import DownloadLinksRepo, LinkModelRepo
+from tasks.tasks import download_file_task, update_thread_name_task
 from utils.utils import DBConnectionHandler
 
 
@@ -62,9 +57,7 @@ async def test_update_thread_name_set(
         if not res_object:
             assert False
 
-    expected: Dict[str, str] = {
-        "status": "object name not updated. Name is already set"
-    }
+    expected: Dict[str, str] = {"status": "object name not updated. Name is already set"}
     res: Dict[str, str] = await update_thread_name_task(
         thread_name="example", url=res_object.for_clubbers_url
     )

@@ -43,4 +43,3 @@ WORKDIR /4clubbers/ForScrappy
 FROM development as prod
 RUN adduser -u 5678 --disabled-password --gecos "" user && chown -R user /4clubbers/ForScrappy
 USER user
-

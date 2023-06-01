@@ -1,24 +1,34 @@
+import datetime
 from logging import Logger
 from time import sleep
 from typing import List, Optional
 
+import sentry_sdk
 import typer
-
+from logger import get_module_logger
 from models.entities import DownloadLinksPydantic
-from models.types import SessionObject
+from models.types import ParserData, SessionObject
+from reporter.use_case import ReporterUseCase
+from repos.db_repo import DownloadLinksRepo, LinkModelRepo
 from repos.request_repo import ForClubbersScrapper
-from repos.db_repo import LinkModelRepo, DownloadLinksRepo
+from settings import settings
 from use_case.use_case import ForClubUseCase
 from utils.decorators import be_async
 from utils.login import User
 from utils.utils import DBConnectionHandler, LinkValidator, validate_category
 
-from logger import get_module_logger
-
 logger: Logger = get_module_logger("db_repo")
 
 
 app = typer.Typer()
+reporter: ReporterUseCase = ReporterUseCase()
+
+
+sentry_sdk.init(
+    dsn=settings.sentry.dsn,
+    traces_sample_rate=1.0,
+    environment=settings.environment,
+)
 
 
 @app.command()
@@ -51,9 +61,25 @@ async def get_forum_links(
 
         links.append(link)
 
-        for link in links:
-            await forum_use_case.get_files_link_from_forum(category=category, link=link)
+        thread_num: int = 0
+        download_links_num: int = 0
+        errors: List[str] = []
 
+        for link in links:
+            res: ParserData = await forum_use_case.get_files_link_from_forum(
+                category=category, link=link
+            )
+            thread_num += res.thread_num
+            download_links_num += res.download_links_num
+            errors.extend(res.errors)
+
+        await reporter.send_report(
+            command="get-forum-links",
+            forum_threads_num=thread_num,
+            links_num=download_links_num,
+            errors=errors,
+            date_time=datetime.datetime.now(),
+        )
         logger.info("Command get-forum-links finished with success")
 
 
@@ -97,5 +123,4 @@ async def files_with_errors() -> None:
 
 
 if __name__ == "__main__":
-    # os.environ['PYTHONASYNCIODEBUG'] = '1'
     app()

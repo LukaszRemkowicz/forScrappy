@@ -1,8 +1,7 @@
 import pytest
 import requests_mock
-from requests import Response
-
 from repos.request_repo import ForClubbersScrapper
+from requests import Response
 
 
 @pytest.mark.asyncio

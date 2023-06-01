@@ -4,11 +4,10 @@ from typing import Optional
 from unittest.mock import MagicMock
 
 import pytest
-from bs4 import BeautifulSoup
-from pytest_mock import MockerFixture
 import requests_mock
-
-from models.entities import LinksModelPydantic, DownloadLinksPydantic
+from bs4 import BeautifulSoup
+from models.entities import DownloadLinksPydantic, LinksModelPydantic
+from pytest_mock import MockerFixture
 from repos.parser_repo import ForClubbersParser, KrakenParser
 from settings import settings
 from utils.exceptions import LinkPostFailure
@@ -61,7 +60,8 @@ async def test_parse_download_links(
     mock_task: MagicMock = MagicMock()
     mocker.patch("tasks.tasks.update_thread_name", return_value=mock_task)
 
-    result: DownloadLinksPydantic = await ForClubbersParser.parse_download_links(
+    result: DownloadLinksPydantic
+    result, _ = await ForClubbersParser.parse_download_links(
         thread_response, link_model.for_clubbers_url, "example_category"
     )
 

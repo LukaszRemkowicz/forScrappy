@@ -1,19 +1,18 @@
 import abc
 from logging import Logger
-from typing import List, Optional, Tuple, Type, TypeVar, Generic
+from typing import Generic, List, Optional, Tuple, Type, TypeVar
 
+from logger import get_module_logger
+from models.entities import (
+    DownloadLinkPydantic,
+    DownloadLinksPydantic,
+    LinkModelPydantic,
+    LinksModelPydantic,
+)
+from models.models import DownloadLinks, LinkModel
 from mypy.checkstrformat import Union
 from tortoise.exceptions import DoesNotExist
 from tortoise.queryset import QuerySet
-
-from models.entities import (
-    LinkModelPydantic,
-    DownloadLinksPydantic,
-    DownloadLinkPydantic,
-    LinksModelPydantic,
-)
-from models.models import LinkModel, DownloadLinks
-from logger import get_module_logger
 
 logger: Logger = get_module_logger("db_repo")
 
@@ -32,12 +31,7 @@ PydanticTypeVar = TypeVar(
     ],
 )
 
-b = (
-    DownloadLinksPydantic
-    | LinksModelPydantic
-    | DownloadLinkPydantic
-    | LinkModelPydantic
-)
+b = DownloadLinksPydantic | LinksModelPydantic | DownloadLinkPydantic | LinkModelPydantic
 
 # TODO klasy generyczne/template, interfejsy
 
@@ -126,7 +120,6 @@ class LinkModelRepo(BaseRepo):
         return LinksModelPydantic(__root__=res)  # type: ignore
 
     async def update_fields(self, obj: PydanticTypeVar, **kwargs) -> None:
-
         assert isinstance(obj, LinkModelPydantic)
         try:
             model_instance: ModelType = await self.model.get(pk=obj.pk)
@@ -149,7 +142,6 @@ class DownloadLinksRepo(BaseRepo):
     link_model: Type[LinkModel] = LinkModel
 
     async def update_fields(self, obj: PydanticTypeVar, **kwargs) -> None:
-
         assert isinstance(obj, DownloadLinkPydantic)
 
         try:
@@ -179,7 +171,6 @@ class DownloadLinksRepo(BaseRepo):
         return link_object
 
     async def save(self, obj: PydanticTypeVar) -> PydanticTypeVar:
-
         assert isinstance(obj, DownloadLinkPydantic)
 
         obj_instance: Optional[DownloadLinks] = await self.model.filter(
@@ -207,7 +198,6 @@ class DownloadLinksRepo(BaseRepo):
     async def get_or_create(
         self, obj: PydanticTypeVar
     ) -> Tuple[Optional[PydanticTypeVar], bool]:
-
         assert isinstance(obj, DownloadLinkPydantic)
 
         exists = await self.filter(link=obj.link)  # type: ignore
