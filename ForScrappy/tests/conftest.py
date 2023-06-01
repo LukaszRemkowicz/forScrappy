@@ -1,28 +1,25 @@
 import logging
 import os
 import warnings
-from typing import Optional, List, Union
+from typing import List, Optional, Union
 from unittest.mock import MagicMock
 
 import pytest
 import requests
-from bs4 import Tag, BeautifulSoup, NavigableString
+from bs4 import BeautifulSoup, NavigableString, Tag
+from dotenv import load_dotenv
+from models.entities import DownloadLinkPydantic, LinkModelPydantic
+from models.types import MyTortoise
 from pytest_docker.plugin import Services
 from pytest_mock import MockerFixture
-
-from tortoise import run_async
-from dotenv import load_dotenv
-
-from models.entities import LinkModelPydantic, DownloadLinkPydantic
-from models.types import MyTortoise
-from repos.db_repo import LinkModelRepo, DownloadLinksRepo
+from repos.db_repo import DownloadLinksRepo, LinkModelRepo
 from repos.request_repo import ForClubbersScrapper
-from settings import ROOT_PATH, DB_CONFIG, settings, PARENT_PATH
+from settings import DB_CONFIG, PARENT_PATH, ROOT_PATH, settings
 from tasks.celery import app
+from tortoise import run_async
 from use_case.use_case import ForClubUseCase
 from utils.exceptions import TestDBWrongCredentialsError
 from utils.utils import DBConnectionHandler
-
 
 env_path: str = os.path.join(PARENT_PATH, ".env")
 load_dotenv(env_path)

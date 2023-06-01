@@ -2,15 +2,14 @@ import cgi
 import datetime
 import shutil
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 from asgiref.sync import async_to_sync
 from celery import shared_task
-from requests import Session
-
-from models.entities import DownloadLinksPydantic, DownloadLinkPydantic
+from models.entities import DownloadLinkPydantic, DownloadLinksPydantic
 from models.models import LinkModel
 from repos.db_repo import DownloadLinksRepo
+from requests import Session
 from settings import settings
 from utils.utils import DBConnectionHandler
 

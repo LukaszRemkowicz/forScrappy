@@ -4,11 +4,9 @@ from logging import Logger
 from time import sleep
 from typing import Dict
 
-from asyncpg import CannotConnectNowError
-
 # from tortoise import Tortoise
 import validators
-
+from asyncpg import CannotConnectNowError
 from logger import get_module_logger
 from models.types import MyTortoise
 from settings import DB_CONFIG, settings

@@ -1,6 +1,5 @@
-from celery import Celery
 import settings
-
+from celery import Celery
 
 app = Celery(
     "tasks",

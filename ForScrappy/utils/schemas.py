@@ -1,10 +1,9 @@
-from typing import List, Dict
+from typing import Dict, List
 
 import jsonschema
 from jsonschema import validate
-from pydantic.dataclasses import dataclass
-
 from models.types import NestedDict
+from pydantic.dataclasses import dataclass
 
 
 @dataclass

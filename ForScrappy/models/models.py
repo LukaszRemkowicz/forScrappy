@@ -1,5 +1,4 @@
-from tortoise import fields, ForeignKeyFieldInstance
-from tortoise import Model
+from tortoise import ForeignKeyFieldInstance, Model, fields
 
 
 class BaseModel(Model):

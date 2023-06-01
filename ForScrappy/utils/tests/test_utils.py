@@ -1,5 +1,4 @@
 import pytest
-
 from settings import settings
 from utils.exceptions import URLNotValidFormat
 from utils.utils import LinkValidator, validate_category

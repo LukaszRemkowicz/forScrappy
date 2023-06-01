@@ -1,10 +1,9 @@
 import pytest
-
 from models import DownloadLinkPydantic, LinkModelPydantic
-from repos.db_repo import LinkModelRepo, DownloadLinksRepo
+from models.types import MyTortoise
+from repos.db_repo import DownloadLinksRepo, LinkModelRepo
 from settings import settings
 from utils.utils import DBConnectionHandler
-from models.types import MyTortoise
 
 
 @pytest.mark.asyncio
@@ -83,9 +82,7 @@ async def test_get_or_create_download_links_repo_row_exists(
 
 
 @pytest.mark.asyncio
-async def test_download_links_create_method(
-    download_link_model, clean_database
-) -> None:
+async def test_download_links_create_method(download_link_model, clean_database) -> None:
     """This case should return False for created flag"""
 
     download_link = await download_link_model

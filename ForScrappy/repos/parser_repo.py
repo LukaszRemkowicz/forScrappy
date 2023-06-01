@@ -2,32 +2,31 @@ import re
 from abc import ABC
 from datetime import datetime
 from logging import Logger
-from typing import List, Optional, Pattern, Dict
+from typing import Dict, List, Optional, Pattern, Tuple
 
 import requests
 import validators
-from bs4 import BeautifulSoup, SoupStrainer, Tag, NavigableString
+from bs4 import BeautifulSoup, NavigableString, SoupStrainer, Tag
 from bs4.element import ResultSet
 from dateutil.parser import ParserError
-from requests import Response
-
 from logger import get_module_logger
 from models.entities import (
-    LinkModelPydantic,
     DownloadLinkPydantic,
     DownloadLinksPydantic,
+    LinkModelPydantic,
     LinksModelPydantic,
 )
 from models.models import LinkModel
 from repos.handlers import LinkModelHandler
+from requests import Response
 from settings import MANAGERS, settings
 from tasks.tasks import update_thread_name
 from utils.exceptions import (
     HashNotFoundException,
-    LinkPostFailure,
     LinkModelDoesNotExist,
-    TokenNotFoundException,
+    LinkPostFailure,
     TokenIsNotStrException,
+    TokenNotFoundException,
 )
 
 logger: Logger = get_module_logger("parser")
@@ -109,9 +108,9 @@ class ForClubbersParser:
             :param obj: Response object
             :return: datetime object
         """
-        date_parser: ResultSet[Tag] = BeautifulSoup(
-            obj.content, features="lxml"
-        ).select('td:has(a[name^="post"])')
+        date_parser: ResultSet[Tag] = BeautifulSoup(obj.content, features="lxml").select(
+            'td:has(a[name^="post"])'
+        )
         date_string: str = str(date_parser[0].text)
 
         for element in ["\n", "\t", "\r"]:
@@ -133,7 +132,7 @@ class ForClubbersParser:
     @staticmethod
     async def parse_download_links(
         obj: Response, url: str, category: str
-    ) -> DownloadLinksPydantic:
+    ) -> Tuple[DownloadLinksPydantic, List[dict]]:
         """
         Parse given topic and return list of download links
             :param obj: Response object
@@ -141,6 +140,8 @@ class ForClubbersParser:
             :param category: Category name (string)
             :return: List of download links
         """
+
+        not_known_managers: List[dict] = []
 
         soup: BeautifulSoup = BeautifulSoup(
             obj.content, parse_only=SoupStrainer("div"), features="lxml"
@@ -167,6 +168,8 @@ class ForClubbersParser:
                 for manager in MANAGERS:
                     if manager in a_href_url:
                         manager_links.append(a_href_url)
+                    else:
+                        not_known_managers.append({obj.url: a_href_url})
 
         # TODO date not used right now
         # date_obj: Optional[datetime] = self.parse_date(obj)
@@ -190,7 +193,7 @@ class ForClubbersParser:
                 )
             )
 
-        return DownloadLinksPydantic(__root__=result)
+        return DownloadLinksPydantic(__root__=result), not_known_managers
 
 
 class KrakenParser(BaseParser):
@@ -226,9 +229,7 @@ class KrakenParser(BaseParser):
         :return: Name
         """
         regex: Pattern = re.compile(".*file-title.*")
-        name_div: Tag | NavigableString | None | int = soup.find(
-            "div", {"class": regex}
-        )
+        name_div: Tag | NavigableString | None | int = soup.find("div", {"class": regex})
         if name_div and isinstance(name_div, Tag):
             name_span: Tag | NavigableString | None | int = name_div.find(
                 "span", {"class": "coin-name"}

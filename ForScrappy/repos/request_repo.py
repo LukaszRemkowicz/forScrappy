@@ -1,13 +1,12 @@
 from logging import Logger
-from typing import Optional, Type, Dict
-
-from requests import Response, Session
-from requests.cookies import RequestsCookieJar
+from typing import Dict, List, Optional, Tuple, Type
 
 from logger import get_module_logger
 from models.entities import DownloadLinksPydantic, LinksModelPydantic
 from models.types import SessionObject
 from repos.parser_repo import ForClubbersParser, ParserType
+from requests import Response, Session
+from requests.cookies import RequestsCookieJar
 from tasks.tasks import download_file
 
 logger: Logger = get_module_logger("request_repo")
@@ -44,7 +43,7 @@ class ForClubbersScrapper:
 
     async def get_download_links(
         self, link: str, category: str
-    ) -> DownloadLinksPydantic:
+    ) -> Tuple[DownloadLinksPydantic, List[dict]]:
         """
         Get download links from specific forum thread. Parse them from html responses
         :param link: str: url to parse

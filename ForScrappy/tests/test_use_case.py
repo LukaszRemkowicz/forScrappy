@@ -1,21 +1,20 @@
-from copy import deepcopy
 import random
-from typing import Type, Awaitable, List, Callable, Optional
+from copy import deepcopy
+from typing import Awaitable, Callable, List, Optional, Type
 from unittest.mock import MagicMock
 
 import pytest
-from pytest_mock import MockerFixture
-from requests import Response
-
 from models import DownloadLinkPydantic
-from models.entities import DownloadLinksPydantic, LinksModelPydantic, LinkModelPydantic
+from models.entities import DownloadLinksPydantic, LinkModelPydantic, LinksModelPydantic
+from pytest_mock import MockerFixture
 from repos.db_repo import DownloadLinksRepo, LinkModelRepo
 from repos.parser_repo import (
-    ParserType,
-    KrakenParser,
-    ZippyshareParser,
     ForClubbersParser,
+    KrakenParser,
+    ParserType,
+    ZippyshareParser,
 )
+from requests import Response
 from use_case.use_case import ForClubUseCase
 from utils.utils import DBConnectionHandler
 
@@ -110,12 +109,10 @@ async def test_get_files_link_from_forum(
     """Test get links method from use case. Test if objects are saved in database."""
 
     async with DBConnectionHandler():
-
         mock_task: MagicMock = MagicMock()
-        download_link_res: DownloadLinksPydantic = (
-            await ForClubbersParser.parse_download_links(
-                thread_response, link_model.for_clubbers_url, "example_category"
-            )
+        download_link_res: DownloadLinksPydantic
+        download_link_res, _ = await ForClubbersParser.parse_download_links(
+            thread_response, link_model.for_clubbers_url, "example_category"
         )
         result: LinksModelPydantic = await ForClubbersParser.parse_forum(
             forum_response, "example_category"
